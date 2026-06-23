@@ -1,0 +1,3201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🇯🇵 沖繩自由行攻略地圖｜老辣妹精選</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a6b8a 0%, #0d4a63 50%, #083344 100%);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+    header .flag { font-size: 2rem; cursor: text; }
+    header .flag:hover { background: rgba(255,255,255,0.1); border-radius: 6px; }
+    header .flag:focus { background: rgba(255,255,255,0.15); border-radius: 6px; outline: 1px dashed rgba(255,255,255,0.4); outline-offset: 2px; }
+    header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; cursor: text; }
+    header h1:hover { background: rgba(255,255,255,0.1); border-radius: 6px; }
+    header h1:focus { background: rgba(255,255,255,0.15); border-radius: 6px; outline: 1px dashed rgba(255,255,255,0.4); outline-offset: 2px; }
+    header p  { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; cursor: text; }
+    header p:hover { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    header p:focus { background: rgba(255,255,255,0.15); border-radius: 4px; outline: 1px dashed rgba(255,255,255,0.4); outline-offset: 2px; }
+    header .badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    /* ── Main layout ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 380px;
+      min-width: 320px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #e2e8f0;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px 10px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .sidebar-header h2 { font-size: 0.9rem; color: #4a5568; margin-bottom: 10px; }
+
+    /* Filter buttons */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .filter-btn {
+      border: none;
+      border-radius: 16px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      color: #fff;
+      opacity: 0.5;
+    }
+    .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    /* Cards list */
+    .cards-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px;
+    }
+
+    .area-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #a0aec0;
+      padding: 8px 4px 4px;
+    }
+
+    .card {
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 4px solid transparent;
+      background: #f8fafc;
+      border: 1px solid #e8edf3;
+      position: relative;
+    }
+    .card:hover { transform: translateX(3px); box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+    .card.active { box-shadow: 0 4px 16px rgba(0,0,0,0.15); transform: translateX(3px); }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+    }
+    .card-num {
+      min-width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 700; color: #fff;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .card-name { font-size: 0.88rem; font-weight: 700; line-height: 1.3; flex: 1; }
+    .card-type {
+      font-size: 0.68rem;
+      background: #edf2f7;
+      color: #4a5568;
+      border-radius: 10px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .card-desc {
+      font-size: 0.75rem;
+      color: #718096;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+    .meta-tag {
+      font-size: 0.68rem;
+      color: #4a5568;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 2px 8px;
+    }
+    .card-info-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #e8edf3;
+    }
+    .info-time, .info-budget {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #2d6a4f;
+      background: #d8f3dc;
+      border-radius: 8px;
+      padding: 2px 8px;
+    }
+    .info-budget { color: #744210; background: #fef3c7; }
+    .p-info-row {
+      display: flex;
+      gap: 8px;
+      margin: 7px 0 4px;
+      flex-wrap: wrap;
+    }
+    .p-info-time, .p-info-budget {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+    .p-info-time  { background: #d8f3dc; color: #1b4332; }
+    .p-info-budget{ background: #fef3c7; color: #744210; }
+    .card-hours-row {
+      font-size: 0.72rem;
+      color: #4a5568;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .card-hours { color: #2b6cb0; font-weight: 600; }
+    .resv-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .resv-no   { background: #c6f6d5; color: #276749; }
+    .resv-rec  { background: #feebc8; color: #9c4221; }
+    .resv-req  { background: #fed7d7; color: #9b2c2c; }
+    .p-hours-row {
+      margin: 5px 0 2px;
+      font-size: 0.75rem;
+      color: #2b6cb0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .p-resv-note {
+      font-size: 0.71rem;
+      color: #744210;
+      margin-top: 3px;
+      font-style: italic;
+    }
+    .card-trans-row {
+      font-size: 0.72rem;
+      color: #553c9a;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .card-trans-row span { font-weight: 600; }
+    .p-trans-box {
+      background: #f5f0ff;
+      border-left: 3px solid #805ad5;
+      border-radius: 0 8px 8px 0;
+      padding: 6px 10px;
+      margin: 6px 0;
+      font-size: 0.75rem;
+      color: #44337a;
+      line-height: 1.6;
+    }
+    .p-trans-box strong { display: block; margin-bottom: 2px; color: #553c9a; }
+
+    /* ── Map ── */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      z-index: 1;
+    }
+
+    /* Leaflet popup custom */
+    .custom-popup .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      padding: 0;
+      overflow: hidden;
+    }
+    .custom-popup .leaflet-popup-content { margin: 0; min-width: 220px; }
+    .popup-header {
+      padding: 10px 14px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .popup-body { padding: 10px 14px; font-size: 0.8rem; color: #2d3748; }
+    .popup-body .p-type { font-size: 0.72rem; color: #718096; margin-bottom: 4px; }
+    .popup-body .p-desc { color: #4a5568; line-height: 1.5; }
+    .popup-body .p-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .popup-body .p-tag {
+      font-size: 0.66rem; background: #edf2f7;
+      color: #4a5568; border-radius: 8px; padding: 2px 8px;
+    }
+    .popup-maps {
+      display: block;
+      text-align: center;
+      padding: 8px;
+      background: #f7fafc;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.75rem;
+      color: #3182ce;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .popup-maps:hover { background: #ebf8ff; }
+
+    /* Legend */
+    .map-legend {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      font-size: 0.75rem;
+    }
+    .map-legend h4 { font-size: 0.78rem; margin-bottom: 8px; color: #4a5568; }
+    .legend-item { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Stats bar */
+    .stats-bar {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 8px 16px;
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+      font-size: 0.73rem;
+      color: #718096;
+    }
+    .stat { display: flex; align-items: center; gap: 5px; }
+    .stat strong { color: #1a6b8a; font-size: 0.95rem; }
+
+    /* Scrollbar */
+    .cards-list::-webkit-scrollbar { width: 5px; }
+    .cards-list::-webkit-scrollbar-track { background: #f1f5f9; }
+    .cards-list::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+
+    /* Hidden class */
+    .hidden { display: none !important; }
+
+    /* ── Sidebar Tabs ── */
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 2px solid #e2e8f0;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+    .sidebar-tab {
+      flex: 1;
+      padding: 10px 6px;
+      border: none;
+      background: transparent;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #a0aec0;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .sidebar-tab.active {
+      color: #1a6b8a;
+      border-bottom-color: #1a6b8a;
+      background: #fff;
+    }
+    .sidebar-tab:hover:not(.active) { color: #4a5568; background: #edf2f7; }
+
+    /* ── Itinerary Timeline ── */
+    .itin-panel {
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px;
+      display: none;
+    }
+    .itin-panel.active { display: block; }
+
+    .itin-day {
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .itin-day-header {
+      padding: 11px 14px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .itin-day-header .day-num {
+      font-size: 1.3rem;
+      font-weight: 900;
+      opacity: 0.9;
+      margin-right: 6px;
+    }
+    .itin-day-header .day-theme {
+      font-size: 0.72rem;
+      opacity: 0.85;
+      display: block;
+      margin-top: 1px;
+    }
+    .itin-day-header .day-transport {
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 2px 10px;
+      margin-top: 4px;
+      display: inline-block;
+    }
+    .itin-items { background: #fff; padding: 6px 0; }
+
+    .itin-item {
+      display: flex;
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      align-items: flex-start;
+    }
+    .itin-item:hover { background: #f0f9ff; }
+    .itin-item.no-spot { cursor: default; opacity: 0.7; }
+    .itin-item.no-spot:hover { background: transparent; }
+
+    .itin-time {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #a0aec0;
+      min-width: 36px;
+      padding-top: 2px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .itin-dot-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      padding-top: 3px;
+    }
+    .itin-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .itin-line {
+      width: 2px;
+      flex: 1;
+      background: #e2e8f0;
+      min-height: 14px;
+    }
+    .itin-content { flex: 1; min-width: 0; }
+    .itin-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #1a202c;
+      line-height: 1.3;
+    }
+    .itin-note {
+      font-size: 0.7rem;
+      color: #718096;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .itin-num {
+      font-size: 0.62rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 1px 6px;
+      color: #fff;
+      margin-left: 4px;
+      vertical-align: middle;
+      display: inline-block;
+    }
+    .itin-warn {
+      font-size: 0.66rem;
+      color: #c05621;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .itin-summary {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 8px 14px;
+      font-size: 0.7rem;
+      color: #718096;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .itin-tip {
+      background: #fffbeb;
+      border-left: 3px solid #d69e2e;
+      border-radius: 0 8px 8px 0;
+      padding: 7px 12px;
+      margin: 8px 0;
+      font-size: 0.72rem;
+      color: #744210;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; min-width: unset; height: 50vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
+      .map-wrapper { height: 50vh; flex: none; }
+      #map { height: 100%; }
+      .map-legend { display: none; }
+
+      header { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+      header .flag { font-size: 1.5rem; }
+      header h1 { font-size: 1rem; }
+      header p { font-size: 0.7rem; }
+      header .badge { font-size: 0.68rem; padding: 3px 10px; }
+      .help-btn, .reset-btn { width: 26px; height: 26px; font-size: 0.75rem; }
+
+      .sidebar-tabs { gap: 0; }
+      .sidebar-tab { padding: 8px 4px; font-size: 0.7rem; }
+
+      .filters { gap: 4px; }
+      .filter-btn { padding: 3px 7px; font-size: 0.65rem; }
+
+      .card { padding: 9px 10px; }
+      .card-add-btn { width: 22px; height: 22px; font-size: 0.75rem; }
+      .card-name { font-size: 0.82rem; }
+      .card-desc { font-size: 0.7rem; }
+
+      .custom-item-time { width: 46px; font-size: 0.68rem; }
+      .custom-item-name { font-size: 0.75rem; }
+      .custom-item-actions button { padding: 4px 7px; font-size: 0.72rem; }
+      .custom-photo-thumb { width: 50px; height: 50px; }
+      .custom-photo-thumb .photo-del { opacity: 0.8; }
+      .photo-lightbox .lb-nav { width: 36px; height: 36px; font-size: 1.8rem; }
+
+      .spot-picker { width: 95vw; max-height: 80vh; }
+
+      .onboard-card { width: 92vw; }
+      .onboard-visual { padding: 24px 18px 16px; }
+      .onboard-visual .ob-icon { font-size: 2.5rem; }
+      .onboard-body { padding: 16px 18px 12px; }
+      .onboard-body h3 { font-size: 0.95rem; }
+      .onboard-body p { font-size: 0.78rem; }
+
+      .stats-bar { flex-wrap: wrap; padding: 6px 10px; gap: 8px; font-size: 0.68rem; }
+    }
+
+    /* ── Print Styles ── */
+    @media print {
+      body { height: auto; display: block; background: #fff; }
+      header { background: #1a6b8a !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .help-btn, .reset-btn, .card-add-btn { display: none !important; }
+      .main { flex-direction: column; height: auto; overflow: visible; }
+      .sidebar { width: 100%; height: auto; overflow: visible; border: none; }
+      .sidebar-tabs { display: none; }
+      .map-wrapper { display: none; }
+      .stats-bar { display: none; }
+      #panelSpots { display: none !important; }
+      #panelCustom { display: none !important; }
+      #panelItin { display: flex !important; overflow: visible; }
+      .itin-panel { overflow: visible; height: auto; }
+      .itin-day { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
+      .itin-day-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .itin-item { cursor: default; }
+      .itin-item:hover { background: transparent; }
+      .custom-day { break-inside: avoid; }
+      .spot-picker-overlay, .onboard-overlay, .add-to-day-menu { display: none !important; }
+      .photo-lightbox { display: none !important; }
+      .custom-photo-thumb .photo-del { display: none !important; }
+      .custom-item-photo-btn { display: none !important; }
+      .custom-photo-thumb { width: 50px; height: 50px; }
+    }
+
+    /* Print custom button */
+    .print-btn {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .print-btn:hover { background: rgba(255,255,255,0.3); }
+
+    /* Print mode selector */
+    .print-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .print-modal {
+      background: #fff;
+      border-radius: 14px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .print-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .print-modal-body { padding: 16px 20px; }
+    .print-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.82rem;
+      color: #1a202c;
+    }
+    .print-option:hover { border-color: #1a6b8a; background: #f0f9ff; }
+    .print-option .po-icon { font-size: 1.3rem; }
+    .print-option .po-text { flex: 1; }
+    .print-option .po-text strong { display: block; font-size: 0.85rem; }
+    .print-option .po-text span { font-size: 0.72rem; color: #718096; }
+    .print-modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid #e2e8f0;
+      text-align: right;
+    }
+    .print-modal-cancel {
+      background: none;
+      border: none;
+      color: #a0aec0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 6px 12px;
+      font-family: inherit;
+    }
+    .print-modal-cancel:hover { color: #718096; }
+
+    /* ── Custom Map Legend ── */
+    .custom-map-legend {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      font-size: 0.75rem;
+    }
+    .custom-map-legend h4 { font-size: 0.78rem; margin-bottom: 6px; color: #4a5568; }
+    .cml-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      padding: 3px 4px;
+      border-radius: 5px;
+      transition: background 0.1s;
+    }
+    .cml-item:hover { background: #f0f9ff; }
+    .cml-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .cml-item span { font-weight: 600; color: #2d3748; }
+
+    .custom-day-zoom {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      transition: background 0.15s;
+    }
+    .custom-day-zoom:hover { background: rgba(255,255,255,0.35); }
+
+    .custom-add-btn.pin { border-color: #805ad5; color: #805ad5; }
+    .custom-add-btn.pin:hover { background: #f5f0ff; }
+
+    .map-pin-mode #map { cursor: crosshair !important; }
+    .pin-drop-banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26,107,138,0.95);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 22px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .custom-map-legend { top: 10px; left: 6px; padding: 8px 10px; font-size: 0.7rem; }
+    }
+    @media print {
+      .custom-map-legend { display: none !important; }
+    }
+
+    /* ── Custom Itinerary Editor ── */
+    .custom-toolbar {
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .custom-add-day-btn {
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #1a6b8a;
+      border-radius: 10px;
+      background: #f0f9ff;
+      color: #1a6b8a;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .custom-add-day-btn:hover { background: #e0f2fe; border-color: #0d4a63; }
+    .custom-empty {
+      text-align: center;
+      color: #a0aec0;
+      padding: 40px 20px;
+      font-size: 0.85rem;
+      line-height: 2;
+    }
+    .custom-day {
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      background: #fff;
+    }
+    .custom-day-header {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #1a6b8a, #0d4a63);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .custom-day-num {
+      font-weight: 900;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .custom-day-title {
+      flex: 1;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      outline: none;
+    }
+    .custom-day-title::placeholder { color: rgba(255,255,255,0.5); }
+    .custom-day-title:focus { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.6); }
+    .custom-day-del {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+    .custom-day-del:hover { background: rgba(255,80,80,0.5); }
+    .custom-items { padding: 6px 8px; min-height: 10px; }
+    .custom-item {
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid #e8edf3;
+      margin-bottom: 5px;
+      background: #f8fafc;
+      transition: box-shadow 0.15s;
+    }
+    .custom-item:hover { box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .custom-item-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .custom-item-time {
+      width: 52px;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 3px 4px;
+      font-size: 0.72rem;
+      text-align: center;
+      font-family: inherit;
+      flex-shrink: 0;
+      outline: none;
+    }
+    .custom-item-time:focus { border-color: #1a6b8a; }
+    .custom-item-name {
+      flex: 1;
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: #1a202c;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .custom-item-name:hover { color: #1a6b8a; }
+    .custom-item-name-input {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .custom-item-name-input:focus { border-color: #1a6b8a; }
+    .custom-item-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .custom-item-actions button {
+      background: #edf2f7;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 5px;
+      cursor: pointer;
+      font-size: 0.68rem;
+      color: #4a5568;
+      transition: all 0.1s;
+    }
+    .custom-item-actions button:hover { background: #e2e8f0; }
+    .custom-item-actions button.del:hover { background: #fed7d7; color: #9b2c2c; }
+    .custom-item-note {
+      width: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.7rem;
+      font-family: inherit;
+      color: #718096;
+      margin-top: 4px;
+      outline: none;
+    }
+    .custom-item-note:focus { border-color: #1a6b8a; }
+
+    .custom-item-photo-btn {
+      background: #edf2f7;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 5px;
+      cursor: pointer;
+      font-size: 0.68rem;
+      color: #4a5568;
+      transition: all 0.1s;
+      flex-shrink: 0;
+    }
+    .custom-item-photo-btn:hover { background: #e2e8f0; }
+
+    .custom-item-photos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .custom-item-photos:empty { display: none; }
+
+    .custom-photo-thumb {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .custom-photo-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .custom-photo-thumb .photo-del {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      width: 16px;
+      height: 16px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+      padding: 0;
+    }
+    .custom-photo-thumb:hover .photo-del { opacity: 1; }
+
+    .photo-lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .photo-lightbox.active { display: flex; }
+    .photo-lightbox img {
+      max-width: 92vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    }
+    .photo-lightbox .lb-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+    }
+    .photo-lightbox .lb-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #fff;
+      font-size: 2.5rem;
+      cursor: pointer;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .photo-lightbox .lb-nav:hover { background: rgba(255,255,255,0.3); }
+    .photo-lightbox .lb-prev { left: 12px; }
+    .photo-lightbox .lb-next { right: 12px; }
+
+    .custom-day-footer {
+      padding: 8px;
+      display: flex;
+      gap: 6px;
+      border-top: 1px solid #e8edf3;
+    }
+    .custom-add-btn {
+      flex: 1;
+      padding: 7px;
+      border: 1px dashed #cbd5e0;
+      border-radius: 8px;
+      background: #fff;
+      color: #4a5568;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .custom-add-btn:hover { background: #f0f9ff; border-color: #1a6b8a; color: #1a6b8a; }
+    .custom-add-btn.spot { border-color: #38a169; color: #38a169; }
+    .custom-add-btn.spot:hover { background: #f0fff4; }
+
+    /* Spot Picker Modal */
+    .spot-picker-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .spot-picker {
+      background: #fff;
+      border-radius: 14px;
+      width: 420px;
+      max-width: 92vw;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+    .spot-picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .spot-picker-header h3 { font-size: 0.95rem; color: #1a202c; margin: 0; }
+    .spot-picker-close {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #a0aec0;
+      padding: 2px 6px;
+    }
+    .spot-picker-close:hover { color: #e53e3e; }
+    .spot-picker-search {
+      margin: 10px 16px;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .spot-picker-search:focus { border-color: #1a6b8a; box-shadow: 0 0 0 2px rgba(26,107,138,0.15); }
+    .spot-picker-list {
+      overflow-y: auto;
+      padding: 0 10px 10px;
+      flex: 1;
+    }
+    .spot-picker-area {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #a0aec0;
+      padding: 10px 6px 4px;
+      letter-spacing: 1px;
+    }
+    .spot-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 0.8rem;
+    }
+    .spot-picker-item:hover { background: #f0f9ff; }
+    .sp-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .sp-name { font-weight: 600; color: #1a202c; flex: 1; }
+    .sp-type { font-size: 0.68rem; color: #718096; flex-shrink: 0; }
+
+    .sp-global-divider {
+      padding: 12px 6px 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1a6b8a;
+      border-top: 1px dashed #e2e8f0;
+      margin-top: 8px;
+    }
+    .sp-global-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      margin: 4px 0;
+      border: 1px dashed #1a6b8a;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #1a6b8a;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .sp-global-btn:hover { background: #f0f9ff; border-color: #0d4a63; }
+    .sp-global-loading {
+      text-align: center;
+      padding: 14px;
+      color: #a0aec0;
+      font-size: 0.78rem;
+    }
+    .sp-global-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 0.78rem;
+    }
+    .sp-global-item:hover { background: #f0fff4; }
+    .sp-g-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      background: #38a169;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .sp-g-info { flex: 1; min-width: 0; }
+    .sp-g-name { font-weight: 600; color: #1a202c; }
+    .sp-g-addr { font-size: 0.68rem; color: #718096; margin-top: 2px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Card add-to-custom button */
+    .card-add-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #1a6b8a;
+      background: #fff;
+      color: #1a6b8a;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      z-index: 5;
+      line-height: 1;
+      padding: 0;
+    }
+    .card-add-btn:hover { background: #1a6b8a; color: #fff; }
+
+    /* Add-to-day dropdown */
+    .add-to-day-menu {
+      position: absolute;
+      top: 36px;
+      right: 8px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      z-index: 100;
+      min-width: 170px;
+      padding: 6px 0;
+      font-size: 0.78rem;
+    }
+    .atd-item {
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+      color: #1a202c;
+    }
+    .atd-item:hover { background: #f0f9ff; }
+    .atd-title {
+      padding: 6px 14px 4px;
+      font-size: 0.68rem;
+      color: #a0aec0;
+      font-weight: 600;
+    }
+
+    /* ── Onboarding Guide ── */
+    .onboard-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .onboard-card {
+      background: #fff;
+      border-radius: 18px;
+      width: 400px;
+      max-width: 90vw;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.3);
+      overflow: hidden;
+      animation: onboardIn 0.3s ease;
+    }
+    @keyframes onboardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .onboard-visual {
+      padding: 32px 24px 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    }
+    .onboard-visual .ob-icon { font-size: 3rem; margin-bottom: 8px; }
+    .onboard-body {
+      padding: 20px 24px 16px;
+    }
+    .onboard-body h3 {
+      font-size: 1.05rem;
+      color: #1a202c;
+      margin: 0 0 8px;
+    }
+    .onboard-body p {
+      font-size: 0.82rem;
+      color: #4a5568;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .onboard-footer {
+      padding: 12px 24px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .onboard-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .onboard-dots .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #cbd5e0;
+      transition: all 0.2s;
+    }
+    .onboard-dots .dot.active {
+      background: #1a6b8a;
+      width: 20px;
+      border-radius: 4px;
+    }
+    .onboard-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .ob-btn-skip {
+      background: none;
+      border: none;
+      color: #a0aec0;
+      font-size: 0.78rem;
+      cursor: pointer;
+      padding: 6px 10px;
+      font-family: inherit;
+    }
+    .ob-btn-skip:hover { color: #718096; }
+    .ob-btn-next {
+      background: #1a6b8a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .ob-btn-next:hover { background: #0d4a63; }
+
+    /* Reset button */
+    .reset-btn {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .reset-btn:hover { background: rgba(255,100,100,0.35); }
+
+    /* Help button */
+    .help-btn {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 8px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .help-btn:hover { background: rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="flag" contenteditable="true" spellcheck="false" id="headerFlag">🇯🇵</div>
+  <div>
+    <h1 contenteditable="true" spellcheck="false" id="headerTitle">沖繩自由行攻略地圖</h1>
+    <p contenteditable="true" spellcheck="false" id="headerSubtitle">老辣妹精選 39 個景點・美食・購物・體驗</p>
+  </div>
+  <div class="badge">📍 39 個地點</div>
+  <button class="print-btn" onclick="openPrintModal()" title="列印 / 匯出 PDF">🖨</button>
+  <button class="reset-btn" onclick="resetAll()" title="重置所有自訂內容">↺</button>
+  <button class="help-btn" onclick="startOnboarding()" title="使用說明">？</button>
+</header>
+
+<div class="main">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Tab 切換 -->
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" id="tabSpots" onclick="switchTab('spots')">📍 景點清單</button>
+      <button class="sidebar-tab" id="tabItin"  onclick="switchTab('itin')">🗓 行程規劃</button>
+      <button class="sidebar-tab" id="tabCustom" onclick="switchTab('custom')">✏️ 自訂行程</button>
+    </div>
+
+    <!-- 景點清單 panel -->
+    <div id="panelSpots" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="sidebar-header">
+        <h2>🗂 依區域篩選</h2>
+        <div class="filters">
+          <button class="filter-btn active" data-area="all" style="background:#4a5568">全部</button>
+          <button class="filter-btn" data-area="naha" style="background:#e53e3e">那霸市區</button>
+          <button class="filter-btn" data-area="minatogawa" style="background:#dd6b20">港川外人住宅</button>
+          <button class="filter-btn" data-area="kokusai" style="background:#d69e2e">國際通</button>
+          <button class="filter-btn" data-area="north" style="background:#38a169">沖繩北部</button>
+          <button class="filter-btn" data-area="american" style="background:#3182ce">美浜・美國村</button>
+          <button class="filter-btn" data-area="banta" style="background:#805ad5">中部海岸</button>
+          <button class="filter-btn" data-area="senaga" style="background:#0987a0">瀨長島</button>
+          <button class="filter-btn" data-area="south" style="background:#702459">沖繩南部</button>
+        </div>
+      </div>
+      <div class="cards-list" id="cardsList"></div>
+    </div>
+
+    <!-- 行程規劃 panel -->
+    <div id="panelItin" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="itin-panel active" id="itinList"></div>
+    </div>
+
+    <!-- 自訂行程 panel -->
+    <div id="panelCustom" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="custom-toolbar">
+        <button class="custom-add-day-btn" onclick="addCustomDay()">＋ 新增一天</button>
+      </div>
+      <div class="itin-panel active" id="customItinList" style="padding:10px;"></div>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+      <div class="stat">🏙️ <strong>4</strong> 區域</div>
+      <div class="stat">🍜 <strong>15</strong> 美食</div>
+      <div class="stat">🛍️ <strong>12</strong> 購物</div>
+      <div class="stat">🌊 <strong>8</strong> 景點體驗</div>
+      <div class="stat">☕ <strong>4</strong> 咖啡廳</div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <div class="pin-drop-banner" id="pinDropBanner" style="display:none">📌 在地圖上點擊要放置地標的位置（按 Esc 取消）</div>
+    <div class="map-legend">
+      <h4>📍 區域圖例</h4>
+      <div class="legend-item"><div class="legend-dot" style="background:#e53e3e"></div>那霸市區</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dd6b20"></div>港川外人住宅</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d69e2e"></div>國際通</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#38a169"></div>沖繩北部</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3182ce"></div>美浜・美國村</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#805ad5"></div>中部海岸</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0987a0"></div>瀨長島</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#702459"></div>沖繩南部</div>
+    </div>
+    <div class="custom-map-legend" id="customMapLegend" style="display:none">
+      <h4>🗺️ 我的行程路線</h4>
+      <div id="customMapLegendItems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Modal -->
+<div id="printModalOverlay" class="print-modal-overlay" style="display:none" onclick="if(event.target===this)closePrintModal()">
+  <div class="print-modal">
+    <div class="print-modal-header">🖨 列印 / 匯出 PDF</div>
+    <div class="print-modal-body">
+      <div class="print-option" onclick="doPrint('itin')">
+        <div class="po-icon">🗓</div>
+        <div class="po-text">
+          <strong>預設行程（4天）</strong>
+          <span>列印內建的 Day 1〜4 行程規劃</span>
+        </div>
+      </div>
+      <div class="print-option" onclick="doPrint('custom')">
+        <div class="po-icon">✏️</div>
+        <div class="po-text">
+          <strong>我的自訂行程</strong>
+          <span>列印你自訂的行程內容</span>
+        </div>
+      </div>
+    </div>
+    <div class="print-modal-footer">
+      <button class="print-modal-cancel" onclick="closePrintModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Onboarding Guide -->
+<div id="onboardOverlay" class="onboard-overlay" style="display:none">
+  <div class="onboard-card">
+    <div class="onboard-visual">
+      <div class="ob-icon" id="obIcon"></div>
+    </div>
+    <div class="onboard-body">
+      <h3 id="obTitle"></h3>
+      <p id="obDesc"></p>
+    </div>
+    <div class="onboard-footer">
+      <div class="onboard-dots" id="obDots"></div>
+      <div class="onboard-btns">
+        <button class="ob-btn-skip" id="obSkip" onclick="endOnboarding()">跳過</button>
+        <button class="ob-btn-next" id="obNext" onclick="nextOnboardStep()">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spot Picker Modal -->
+<div id="spotPickerModal" class="spot-picker-overlay" style="display:none" onclick="if(event.target===this)closeSpotPicker()">
+  <div class="spot-picker">
+    <div class="spot-picker-header">
+      <h3>📍 選擇景點加入行程</h3>
+      <button class="spot-picker-close" onclick="closeSpotPicker()">✕</button>
+    </div>
+    <input type="text" class="spot-picker-search" id="spotSearchInput" placeholder="搜尋景點名稱，或輸入任意地點按 Enter 全球搜尋..." oninput="buildSpotPickerList(this.value)" onkeydown="if(event.key==='Enter'&&this.value.trim())doGlobalSearch(this.value.trim())">
+    <div class="spot-picker-list" id="spotPickerList"></div>
+  </div>
+</div>
+
+<input type="file" id="photoFileInput" accept="image/*" multiple style="display:none">
+
+<div class="photo-lightbox" id="photoLightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">&times;</button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();navLightbox(-1)">&#8249;</button>
+  <img id="lightboxImg" src="" alt="">
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();navLightbox(1)">&#8250;</button>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────
+const spots = [
+  // 那霸市區
+  {
+    id: 1, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: '那霸市第一牧志公設市場', type: '傳統市場',
+    emoji: '🏪',
+    desc: '沖繩最大傳統市場，販售新鮮海鮮、肉品及沖繩特色食材。可在1樓購買生鮮後帶至2樓加工烹調，體驗在地飲食文化。',
+    tags: ['必去', '傳統市場', '海鮮', '沖繩體驗'],
+    mapUrl: 'https://maps.app.goo.gl/npN7woeNoFqfz',
+    time: '1〜2 小時', budget: '¥1,000〜3,000',
+    hours: '08:00〜21:00（週二公休）', resv: '不需預約',
+    trans: '🚝 Yui Rail 至牧志站，步行約 5 分｜🚕 計程車從那霸機場約 20 分',
+    lat: 26.2174, lng: 127.7160,
+  },
+  {
+    id: 2, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: '和牛専門店 ししや', type: '燒肉餐廳',
+    emoji: '🥩',
+    desc: '沖繩和牛燒肉專門店，使用頂級和牛部位，肉質細緻油脂豐富，是品嚐高級燒肉的好選擇。',
+    tags: ['和牛', '燒肉', '高級餐廳'],
+    mapUrl: 'https://maps.app.goo.gl/BaFA5sqj5LpLN',
+    ig: 'shishiyaokinawa',
+    time: '1〜1.5 小時', budget: '¥4,000〜8,000',
+    hours: '17:00〜23:00', resv: '建議預約', resvNote: '建議出發前 1〜2 週預約',
+    trans: '🚝 Yui Rail 至牧志站，步行約 5 分｜🚕 計程車從那霸市中心約 10 分',
+    lat: 26.2178, lng: 127.7163,
+  },
+  {
+    id: 3, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'じーまーみ豆腐専門店 花商', type: '沖繩小吃',
+    emoji: '🫘',
+    desc: '沖繩傳統花生豆腐（じーまーみ豆腐）專門店。口感滑嫩Q彈，以花生製成，搭配甜醬油風味獨特，是沖繩必吃特色小吃。',
+    tags: ['花生豆腐', '沖繩特色', '伴手禮'],
+    mapUrl: 'https://maps.app.goo.gl/Dt5xGxqoxSHJV',
+    time: '約 15 分鐘', budget: '¥300〜600',
+    hours: '10:00〜18:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至牧志站，步行約 5 分',
+    lat: 26.2171, lng: 127.7157,
+  },
+  {
+    id: 4, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'コーヒースタンド小嶺', type: '咖啡站',
+    emoji: '☕',
+    desc: '牧志市場周邊的精品咖啡站，提供手沖咖啡等精品飲品，適合逛市場時小憩片刻。',
+    tags: ['精品咖啡', '外帶咖啡'],
+    mapUrl: 'https://maps.app.goo.gl/TNbHBNa7gRrYD',
+    time: '約 15 分鐘', budget: '¥400〜700',
+    hours: '08:00〜18:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至牧志站，步行約 5 分',
+    lat: 26.2173, lng: 127.7165,
+  },
+  {
+    id: 5, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'サーターアンダギー歩', type: '沖繩甜點',
+    emoji: '🍩',
+    desc: '沖繩傳統炸甜甜圈サーターアンダギー名店。外酥內軟，口味多樣，是逛市場必吃的在地甜點，也是超人氣伴手禮。',
+    tags: ['沖繩甜甜圈', '甜點', '伴手禮', '必吃'],
+    mapUrl: 'https://maps.app.goo.gl/kAxnNC2QTFw7M',
+    time: '約 15 分鐘', budget: '¥200〜500',
+    hours: '09:00〜18:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至牧志站，步行約 5 分',
+    lat: 26.2170, lng: 127.7155,
+  },
+  {
+    id: 6, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'ポーたま 牧志市場店', type: '早餐・輕食',
+    emoji: '🍙',
+    desc: '沖繩必吃早餐代表！豬肉蛋飯糰（ポーク玉子おにぎり）專門店，以SPAM午餐肉＋荷包蛋捲入米飯，是沖繩人的靈魂早餐。',
+    tags: ['沖繩早餐', '飯糰', '必吃', '排隊名店'],
+    mapUrl: 'https://maps.app.goo.gl/ZXuZNpTnCe2Kw',
+    ig: 'pork_tamago_onigiri',
+    time: '約 20 分鐘', budget: '¥400〜700',
+    hours: '07:00〜17:30（售完為止）', resv: '不需預約', resvNote: '熱門口味早上易售完，建議早上 8 點前到',
+    trans: '🚝 Yui Rail 至牧志站，步行約 3 分',
+    lat: 26.2176, lng: 127.7162,
+  },
+  {
+    id: 7, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'C&C BREAKFAST', type: '早午餐',
+    emoji: '🍳',
+    desc: '那霸人氣早午餐咖啡廳，提供美式早午餐及鬆餅等餐點，環境舒適，是旅途中充電的好去處。',
+    tags: ['早午餐', '咖啡廳', '鬆餅'],
+    mapUrl: 'https://maps.app.goo.gl/ybREPeDr1aYx2',
+    ig: 'candcbreakfast',
+    time: '1〜1.5 小時', budget: '¥1,000〜2,000',
+    hours: '08:00〜14:00（週三公休）', resv: '建議預約', resvNote: '假日常滿座，建議前 2〜3 天預約或開店前排隊',
+    trans: '🚝 Yui Rail 至牧志站，步行約 8 分',
+    lat: 26.2189, lng: 127.7172,
+  },
+  {
+    id: 8, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
+    name: 'Jef ジェフ サンライズ那覇店', type: '速食',
+    emoji: '🍔',
+    desc: '沖繩在地速食品牌，招牌商品為「苦瓜漢堡（ゴーヤーバーガー）」，是全日本獨一無二的沖繩限定口味，必嚐！',
+    tags: ['沖繩限定', '苦瓜漢堡', '在地速食', '必吃'],
+    mapUrl: 'https://maps.app.goo.gl/mQgH9GmVoW4vy',
+    ig: 'jef_okinawa',
+    time: '約 30 分鐘', budget: '¥600〜1,200',
+    hours: '10:00〜22:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至縣廳前站，步行約 5 分｜🚶 國際通步行圈內',
+    lat: 26.2135, lng: 127.6855,
+  },
+
+  // 港川外人住宅
+  {
+    id: 9, area: 'minatogawa', color: '#dd6b20', areaName: '港川外人住宅',
+    name: '港川ステイツサイドタウン', type: '文青商業區',
+    emoji: '🏘️',
+    desc: '由舊美軍宿舍改建而成的文青聚落，充滿濃厚美式復古氛圍。集結特色咖啡廳、選物店、甜點店，是沖繩最有風格的打卡勝地。',
+    tags: ['外人住宅', '文青打卡', '必去', '美式風格'],
+    mapUrl: 'https://maps.app.goo.gl/RZxJP6sFMKGf4',
+    time: '1.5〜2 小時', budget: '¥1,000〜4,000',
+    hours: '各店約 11:00〜19:00', resv: '不需預約',
+    trans: '🚗 租車從那霸市區約 20 分｜🚌 那霸巴士 103 號至港川站，步行約 15 分（約 40 分）',
+    lat: 26.2820, lng: 127.7218,
+  },
+  {
+    id: 10, area: 'minatogawa', color: '#dd6b20', areaName: '港川外人住宅',
+    name: 'THE FLAVOR DESIGN® STORE "OKINAWA"', type: '香水・選物',
+    emoji: '🌸',
+    desc: '以沖繩自然為靈感的設計師香水品牌旗艦店，提供香水客製體驗。商品融入沖繩海洋、植物元素，是獨特的在地伴手禮。',
+    tags: ['香水', '設計師品牌', '特色伴手禮'],
+    mapUrl: 'https://maps.app.goo.gl/DpgoWddQ3ep56',
+    ig: 'theflavordesign_okinawa',
+    time: '約 30 分鐘', budget: '¥3,000〜10,000',
+    hours: '11:00〜19:00', resv: '不需預約',
+    trans: '🚗 租車從那霸市區約 20 分｜🚌 那霸巴士 103 號至港川站，步行約 15 分',
+    lat: 26.2822, lng: 127.7221,
+  },
+  {
+    id: 11, area: 'minatogawa', color: '#dd6b20', areaName: '港川外人住宅',
+    name: 'Vintage Shop American Wave', type: '古著店',
+    emoji: '👗',
+    desc: '美式復古風格二手古著店，收藏豐富的美式服飾、飾品及雜貨，喜愛復古穿搭的旅人必逛。',
+    tags: ['古著', '美式復古', '二手服飾'],
+    mapUrl: 'https://maps.app.goo.gl/CJvGxy4Q2ToSe',
+    ig: 'americanwaveokinawa',
+    time: '約 30 分鐘', budget: '¥1,000〜5,000',
+    hours: '12:00〜19:00', resv: '不需預約',
+    trans: '🚗 租車從那霸市區約 20 分｜🚌 那霸巴士 103 號至港川站，步行約 15 分',
+    lat: 26.2819, lng: 127.7216,
+  },
+  {
+    id: 12, area: 'minatogawa', color: '#dd6b20', areaName: '港川外人住宅',
+    name: 'ほうき星 港川本店', type: '甜點咖啡廳',
+    emoji: '🍮',
+    desc: '港川外人住宅人氣甜點咖啡廳，以精緻甜點搭配特色飲品聞名，環境氛圍溫馨，是下午茶的完美選擇。',
+    tags: ['甜點', '咖啡廳', '人氣店'],
+    mapUrl: 'https://maps.app.goo.gl/BMDGHhZVJh3uS',
+    ig: 'houki_boshi_',
+    time: '約 45 分鐘', budget: '¥800〜1,500',
+    hours: '11:00〜18:00（週三公休）', resv: '不需預約',
+    trans: '🚗 租車從那霸市區約 20 分｜🚌 那霸巴士 103 號至港川站，步行約 15 分',
+    lat: 26.2818, lng: 127.7222,
+  },
+  {
+    id: 13, area: 'minatogawa', color: '#dd6b20', areaName: '港川外人住宅',
+    name: 'Cocoroar CAFE', type: '咖啡廳',
+    emoji: '☕',
+    desc: '位於港川外人住宅的特色咖啡廳，提供精心調製的咖啡與輕食，充滿藝術氛圍，是放鬆休憩的好所在。',
+    tags: ['咖啡廳', '藝術空間', '外人住宅'],
+    mapUrl: 'https://maps.app.goo.gl/HN2Fpmrvi9AzT',
+    ig: 'cocoroarcafe_minatogawa',
+    time: '約 45 分鐘', budget: '¥600〜1,200',
+    hours: '11:00〜18:00', resv: '不需預約',
+    trans: '🚗 租車從那霸市區約 20 分｜🚌 那霸巴士 103 號至港川站，步行約 15 分',
+    lat: 26.2817, lng: 127.7214,
+  },
+
+  // 那霸國際通
+  {
+    id: 14, area: 'kokusai', color: '#d69e2e', areaName: '那霸國際通',
+    name: '那覇 国際通り商店街', type: '購物商圈',
+    emoji: '🛍️',
+    desc: '沖繩最熱鬧的商店街，全長約1.6公里，匯集伴手禮店、服飾店、餐廳、居酒屋。是購買沖繩特產的最佳場所，每週日部分路段封街。',
+    tags: ['必逛', '伴手禮', '購物', '步行街'],
+    mapUrl: 'https://maps.app.goo.gl/FDaXCKCoiAf7y',
+    time: '2〜3 小時', budget: '¥2,000〜10,000',
+    hours: '各店約 10:00〜22:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至縣廳前站 or 牧志站，步行即達｜🚕 計程車從那霸機場約 15 分',
+    lat: 26.2141, lng: 127.6862,
+  },
+  {
+    id: 15, area: 'kokusai', color: '#d69e2e', areaName: '那霸國際通',
+    name: 'Splash okinawa 1号店', type: '服飾品牌',
+    emoji: '👕',
+    desc: '沖繩本土設計服飾品牌，以大海、珊瑚礁等沖繩元素設計T恤、帽子等商品，是獨特的在地時尚伴手禮。',
+    tags: ['沖繩品牌', '服飾', '伴手禮'],
+    mapUrl: 'https://maps.app.goo.gl/CYSKKZxZQ3Eyp',
+    ig: 'splash_okinawa',
+    time: '約 30 分鐘', budget: '¥2,000〜6,000',
+    hours: '10:00〜21:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至縣廳前站，步行約 5 分',
+    lat: 26.2143, lng: 127.6864,
+  },
+  {
+    id: 16, area: 'kokusai', color: '#d69e2e', areaName: '那霸國際通',
+    name: 'Fontana Gelato', type: '義式冰淇淋',
+    emoji: '🍦',
+    desc: '國際通人氣義式冰淇淋店，使用沖繩本地食材製作各式口味，包含鹽味、紅芋、海鹽奶油等沖繩限定口味。',
+    tags: ['義式冰淇淋', '沖繩限定口味', '甜點'],
+    mapUrl: 'https://maps.app.goo.gl/x5gbCwAhq83cz',
+    ig: 'fontanagelato',
+    time: '約 15 分鐘', budget: '¥500〜800',
+    hours: '10:00〜22:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至縣廳前站，步行約 3 分',
+    lat: 26.2140, lng: 127.6860,
+  },
+  {
+    id: 17, area: 'kokusai', color: '#d69e2e', areaName: '那霸國際通',
+    name: 'あっぱりしゃん', type: '沖繩雜貨',
+    emoji: '🪆',
+    desc: '販售沖繩傳統工藝品與現代設計雜貨的選物店。店名「あっぱりしゃん」在琉球語意指「可愛」，商品精緻有特色。',
+    tags: ['工藝品', '沖繩雜貨', '伴手禮', '琉球文化'],
+    mapUrl: 'https://maps.app.goo.gl/y7woSRDVbCg2A',
+    time: '約 30 分鐘', budget: '¥500〜3,000',
+    hours: '10:00〜20:00', resv: '不需預約',
+    trans: '🚝 Yui Rail 至縣廳前站，步行約 5 分',
+    lat: 26.2142, lng: 127.6858,
+  },
+  {
+    id: 18, area: 'kokusai', color: '#d69e2e', areaName: '那霸國際通',
+    name: '沖縄そばの店 しむじょう', type: '沖繩麵',
+    emoji: '🍜',
+    desc: '國際通附近的老字號沖繩麵專門店，以傳統做法製作湯頭，配上軟嫩三層肉與沖繩麵，是品嚐正宗沖繩風味的首選。',
+    tags: ['沖繩麵', '老字號', '傳統料理', '必吃'],
+    mapUrl: 'https://maps.app.goo.gl/9tSrR7T2xxMBi',
+    ig: 'shimujo',
+    time: '約 45 分鐘', budget: '¥900〜1,500',
+    hours: '11:00〜15:00（不定休）', resv: '不需預約', resvNote: '供應量有限，建議 11 點開店前到',
+    trans: '🚝 Yui Rail 至美榮橋站，步行約 10 分｜🚕 計程車從國際通約 5 分',
+    lat: 26.2155, lng: 127.6888,
+  },
+
+  // 沖繩北部
+  {
+    id: 19, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: 'ブセナ海中公園', type: '海洋公園',
+    emoji: '🌊',
+    desc: '部瀨名海中公園是沖繩著名的海洋體驗景點，園內設有玻璃底船及海中展望塔，不需潛水即可欣賞美麗的珊瑚礁海底世界。',
+    tags: ['海洋體驗', '珊瑚礁', '必去', '親子友善'],
+    mapUrl: 'https://maps.app.goo.gl/LmmR1z4g7vMAE',
+    ig: 'busenamarinepark',
+    time: '1.5〜2 小時', budget: '¥1,500〜3,000',
+    hours: '09:00〜18:00（入場至 17:30）', resv: '不需預約',
+    trans: '🚗 租車從那霸約 1.5 小時（沖繩自動車道）｜🚌 高速巴士至名護，計程車約 10 分（共約 2 小時）',
+    lat: 26.5281, lng: 127.9342,
+  },
+  {
+    id: 20, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: '玻璃底船（グラス底ボート）', type: '體驗活動',
+    emoji: '🚢',
+    desc: '乘坐船底透明的玻璃底船，在海面上即可清楚觀賞珊瑚礁與熱帶魚。無需換裝潛水，老少皆宜的海洋體驗。約30分鐘一趟。',
+    tags: ['玻璃底船', '珊瑚礁觀賞', '親子活動'],
+    mapUrl: 'https://maps.app.goo.gl/D8N4WzXkSAViZ',
+    time: '約 30 分鐘', budget: '¥1,500（含入場費）',
+    hours: '09:00〜17:30（最終班次依天候）', resv: '不需預約',
+    trans: '🚗 租車從那霸約 1.5 小時｜位於ブセナ海中公園內，與19號同行程',
+    lat: 26.5283, lng: 127.9344,
+  },
+  {
+    id: 21, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: '海中展望塔', type: '景觀設施',
+    emoji: '🗼',
+    desc: '步入海中的海底展望塔，沿螺旋梯走入海面下，透過展望窗360度欣賞海底珊瑚礁生態，是沖繩獨特體驗之一。',
+    tags: ['海底展望', '珊瑚礁', '獨特體驗'],
+    mapUrl: 'https://maps.app.goo.gl/3pMazi93ykJxM',
+    time: '約 30 分鐘', budget: '¥1,000（含入場費）',
+    hours: '09:00〜18:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 1.5 小時｜位於ブセナ海中公園內，與19號同行程',
+    lat: 26.5280, lng: 127.9341,
+  },
+  {
+    id: 22, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: '沖縄美ら海水族館', type: '水族館',
+    emoji: '🐋',
+    desc: '沖繩最著名的景點之一，擁有全球數一數二的巨型水槽「黑潮之海」，可近距離觀賞鯨鯊、蝠鱝。另設有海豚表演、海牛館。\n\n💰 票價：成人 ¥2,180｜中小學生 ¥710｜5歲以下免費',
+    tags: ['必去', '鯨鯊', '世界級水族館', '親子必訪'],
+    mapUrl: 'https://maps.app.goo.gl/MwwMtxfSaG315',
+    ig: 'kaiyohaku_churaumi',
+    time: '2〜3 小時', budget: '成人 ¥2,180',
+    hours: '08:30〜20:00（最終入場 19:00）', resv: '不需預約', resvNote: '暑假人潮眾多，建議平日或開館時段前往',
+    trans: '🚗 租車從那霸約 1 小時 45 分（沖繩自動車道）｜🚌 高速巴士至名護，轉 65/70 號巴士（共約 2.5 小時）',
+    lat: 26.6940, lng: 127.8784,
+  },
+  {
+    id: 23, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: '備瀬のフクギ並木', type: '自然景觀',
+    emoji: '🌳',
+    desc: '備瀨村落中綿延的福木林蔭大道，古老福木樹形成天然綠色隧道，是沖繩最具詩意的自然景色。建議騎腳踏車或步行慢慢享受。',
+    tags: ['綠色隧道', '自然景觀', '必拍', '騎車探索'],
+    mapUrl: 'https://maps.app.goo.gl/P9nNiJ7qRHBqd',
+    time: '1〜1.5 小時', budget: '免費（租車另計）',
+    hours: '全天開放', resv: '不需預約',
+    trans: '🚗 租車從美ら海水族館約 10 分｜🚲 美ら海水族館騎腳踏車約 15 分',
+    lat: 26.7017, lng: 127.8756,
+  },
+  {
+    id: 24, area: 'north', color: '#38a169', areaName: '沖繩北部',
+    name: 'Namiki Bike Rentals 並木レンタサイクル', type: '租車服務',
+    emoji: '🚲',
+    desc: '位於備瀨福木並木附近的腳踏車租借店，提供多種腳踏車選擇，是探索備瀨村及周邊美景最方便的交通工具。',
+    tags: ['腳踏車租借', '備瀨探索'],
+    mapUrl: 'https://maps.app.goo.gl/rcW2fCkaRXg2y',
+    time: '依行程而定', budget: '¥300〜500 / 小時',
+    hours: '09:00〜17:00', resv: '不需預約',
+    trans: '🚗 租車從美ら海水族館約 10 分｜現場租借腳踏車探索備瀨並木',
+    lat: 26.7015, lng: 127.8754,
+  },
+
+  // 美浜・美國村
+  {
+    id: 25, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: '美浜タウンリゾート・アメリカンビレッジ', type: '複合商業區',
+    emoji: '🎡',
+    desc: '沖繩中部最大的娛樂購物區，充滿濃厚美式風情。設有摩天輪、購物中心、餐廳、電影院，傍晚夕陽景色絕美，是沖繩中部必去景點。',
+    tags: ['必去', '購物', '夕陽打卡', '美式風格', '摩天輪'],
+    mapUrl: 'https://maps.app.goo.gl/aw81Ro6zkiqhK',
+    ig: 'americanvillage.okinawa',
+    time: '2〜3 小時', budget: '¥2,000〜8,000',
+    hours: '各店約 10:00〜22:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜🚌 那霸巴士 28/29 號至美浜站約 1 小時',
+    lat: 26.3097, lng: 127.7546,
+  },
+  {
+    id: 26, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: 'A&W 美浜店', type: '速食',
+    emoji: '🍟',
+    desc: '沖繩限定美式速食連鎖，在日本本土已幾乎絕跡，沖繩仍有多家分店。必點根汁汽水（Root Beer）與炸雞腿，是沖繩獨特飲食體驗。',
+    tags: ['沖繩限定', 'Root Beer', '必嚐', '美式速食'],
+    mapUrl: 'https://maps.app.goo.gl/aUBQbVeuV31h7',
+    ig: 'aw_okinawa',
+    time: '約 30 分鐘', budget: '¥600〜1,200',
+    hours: '09:00〜23:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜🚌 那霸巴士 28/29 號，步行約 5 分',
+    lat: 26.3095, lng: 127.7548,
+  },
+  {
+    id: 27, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: '日本製島ぞうり専門店 OKICHU／沖忠', type: '特色商店',
+    emoji: '🩴',
+    desc: '日本製人字拖（島ぞうり）專門店，提供多種顏色與花樣選擇，是沖繩最具代表性的在地伴手禮之一，可客製化刻名。',
+    tags: ['人字拖', '伴手禮', '日本製', '沖繩特色'],
+    mapUrl: 'https://maps.app.goo.gl/95tPLw5kdyeU2',
+    ig: 'okichu.shimazouri',
+    time: '約 30 分鐘', budget: '¥1,500〜4,000',
+    hours: '10:00〜20:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜美國村內步行可達',
+    lat: 26.3099, lng: 127.7544,
+  },
+  {
+    id: 28, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: 'タコライスcafe きじむなぁ デポアイランド店', type: '餐廳',
+    emoji: '🌮',
+    desc: '沖繩發明的創意料理「塔可飯（タコライス）」名店，將墨西哥塔可的食材鋪在白米飯上，是沖繩獨特B級美食的代表。',
+    tags: ['塔可飯', '沖繩創意料理', '必吃', 'B級美食'],
+    mapUrl: 'https://maps.app.goo.gl/1y3a5VuaadkXU',
+    time: '約 30 分鐘', budget: '¥800〜1,500',
+    hours: '11:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜美國村 Depot Island 內步行可達',
+    lat: 26.3098, lng: 127.7550,
+  },
+  {
+    id: 29, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: 'アメリカンデポ American Depot', type: '古著雜貨',
+    emoji: '🎪',
+    desc: '美國村內的美式古著與雜貨集散地，集結多個古著攤位與美式雜貨品牌，是尋找復古寶物的好去處。',
+    tags: ['古著', '美式雜貨', '逛街'],
+    mapUrl: 'https://maps.app.goo.gl/6gYW2tMRST1XD',
+    time: '約 45 分鐘', budget: '¥1,000〜5,000',
+    hours: '11:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜美國村內步行可達',
+    lat: 26.3096, lng: 127.7542,
+  },
+  {
+    id: 30, area: 'american', color: '#3182ce', areaName: '美浜・美國村',
+    name: 'ソーホー SOHO', type: '購物',
+    emoji: '🏬',
+    desc: '美國村內的購物商場，集結多家服飾、雜貨、餐飲店鋪，是逛遍美國村的重要據點之一。',
+    tags: ['購物商場', '美國村', '逛街'],
+    mapUrl: 'https://maps.app.goo.gl/76K9n3HTzxqpP',
+    time: '約 30 分鐘', budget: '¥1,000〜5,000',
+    hours: '10:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸約 40 分｜美國村內步行可達',
+    lat: 26.3100, lng: 127.7547,
+  },
+
+  // 中部海岸
+  {
+    id: 31, area: 'banta', color: '#805ad5', areaName: '中部海岸',
+    name: 'BANTA CAFE バンタカフェ by 星野リゾート', type: '海景咖啡廳',
+    emoji: '🌅',
+    desc: '星野度假村旗下的絕景咖啡廳，建於讀谷村懸崖之上，可俯瞰壯闊的東海海景。夕陽時分景色最為動人，是沖繩最夢幻的咖啡廳之一。',
+    tags: ['星野度假村', '必打卡', '懸崖咖啡', '夕陽景觀', '海景'],
+    mapUrl: 'https://maps.app.goo.gl/vGnvBLSMXU7VF',
+    ig: 'banta_cafe',
+    time: '1〜1.5 小時', budget: '¥800〜2,000',
+    hours: '10:00〜22:00（最後點餐 21:30）', resv: '不需預約', resvNote: '夕陽時段（17:00〜19:00）人潮最多，建議提早前往',
+    trans: '🚗 租車從那霸約 50 分、從美國村約 20 分｜停車場寬敞，強烈建議自駕',
+    lat: 26.3921, lng: 127.7124,
+  },
+
+  // 瀨長島
+  {
+    id: 32, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: '瀬長島 ウミカジテラス', type: '複合商業區',
+    emoji: '🏛️',
+    desc: '被稱為「沖繩小希臘」的純白地中海風格商店街，緊鄰那霸機場，飛機低空飛過的震撼畫面是一大特色。集結餐廳、咖啡廳、伴手禮店。',
+    tags: ['必去', '飛機打卡', '地中海風格', '海景', '夕陽'],
+    mapUrl: 'https://maps.app.goo.gl/NLcDAt5jgCa4H',
+    ig: 'umikajiterrace',
+    time: '1.5〜2 小時', budget: '¥1,000〜3,000',
+    hours: '各店約 10:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸機場約 15 分｜🚕 計程車從那霸機場約 15 分（¥1,500 左右）｜🚌 豐崎接駁巴士（部分時段）',
+    lat: 26.1694, lng: 127.6736,
+  },
+  {
+    id: 33, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: 'Ice Terrace', type: '冰品',
+    emoji: '🍧',
+    desc: '瀨長島ウミカジテラス內的人氣冰品店，提供多種沖繩特色冰品，在海風徐徐的露台享用，格外清涼消暑。',
+    tags: ['冰品', '沖繩限定', '瀨長島'],
+    mapUrl: 'https://maps.app.goo.gl/zgUpjZvK9udRW',
+    ig: 'ice_terrace_okinawa',
+    time: '約 15 分鐘', budget: '¥400〜700',
+    hours: '10:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸機場約 15 分｜位於ウミカジテラス內步行可達',
+    lat: 26.1696, lng: 127.6738,
+  },
+  {
+    id: 34, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: '幸せのパンケーキ ウミカジテラス 沖縄店', type: '鬆餅',
+    emoji: '🥞',
+    desc: '日本連鎖人氣鬆餅品牌，以入口即化的舒芙蕾鬆餅聞名。瀨長島店坐擁海景，邊享用鬆軟鬆餅邊看海，是夢幻的體驗。',
+    tags: ['舒芙蕾鬆餅', '海景', '人氣甜點'],
+    mapUrl: 'https://maps.app.goo.gl/oygsELiKLfZse',
+    ig: 'ahappypancake_official',
+    time: '約 1 小時', budget: '¥1,300〜2,000',
+    hours: '10:00〜20:00（最後點餐 19:30）', resv: '建議預約', resvNote: '假日等候時間長，建議前 1〜2 天預約',
+    trans: '🚗 租車從那霸機場約 15 分｜位於ウミカジテラス內步行可達',
+    lat: 26.1693, lng: 127.6735,
+  },
+  {
+    id: 35, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: '氾濫バーガー チムフガス 瀬長島ウミカジテラス店', type: '漢堡',
+    emoji: '🍔',
+    desc: '以「氾濫」命名的豪邁漢堡店，食材滿出來的誇張份量是一大特色。多種口味選擇，搭配海景享用，格外豪爽過癮。',
+    tags: ['爆漿漢堡', '大份量', '必吃'],
+    mapUrl: 'https://maps.app.goo.gl/rSEEKyNxy4psH',
+    ig: 'chimufugas',
+    time: '約 30 分鐘', budget: '¥900〜1,500',
+    hours: '11:00〜21:00', resv: '不需預約',
+    trans: '🚗 租車從那霸機場約 15 分｜位於ウミカジテラス內步行可達',
+    lat: 26.1695, lng: 127.6737,
+  },
+  {
+    id: 36, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: 'POSILLIPO cucina meridionale', type: '義大利料理',
+    emoji: '🍝',
+    desc: '瀨長島上的南義大利料理餐廳，提供道地義式料理，搭配絕美海景，是適合浪漫晚餐的選擇。',
+    tags: ['義大利料理', '海景餐廳', '浪漫晚餐'],
+    mapUrl: 'https://maps.app.goo.gl/MDtq54g4QN3sK',
+    ig: 'posillipo_okinawa',
+    time: '1.5〜2 小時', budget: '¥2,500〜5,000',
+    hours: '11:00〜21:00（中間休息 15:00〜17:00）', resv: '建議預約', resvNote: '晚間海景座位搶手，建議提前 3〜5 天預約',
+    trans: '🚗 租車從那霸機場約 15 分｜位於ウミカジテラス內步行可達',
+    lat: 26.1692, lng: 127.6734,
+  },
+  {
+    id: 37, area: 'senaga', color: '#0987a0', areaName: '瀨長島',
+    name: '瀬長島の子宝岩', type: '自然景點',
+    emoji: '🪨',
+    desc: '瀨長島上的祈願聖地，傳說到此祈禱可求得子嗣。造型特殊的岩石是島上的自然地標，也是許多旅人會順道參訪的景點。',
+    tags: ['祈願', '自然景點', '瀨長島散步'],
+    mapUrl: 'https://maps.app.goo.gl/W9zbeb8wzhn3z',
+    time: '約 15 分鐘', budget: '免費',
+    hours: '全天開放', resv: '不需預約',
+    trans: '🚗 租車從那霸機場約 15 分｜瀨長島散步即達',
+    lat: 26.1697, lng: 127.6740,
+  },
+
+  // 沖繩南部
+  {
+    id: 38, area: 'south', color: '#702459', areaName: '沖繩南部',
+    name: 'Gangala ガンガラーの谷', type: '自然景點',
+    emoji: '🌿',
+    desc: '由古老鐘乳石洞自然崩塌形成的神秘谷地，擁有茂密的亞熱帶植被與史前遺跡。需預約導覽（約1.5小時），是沖繩最獨特的自然體驗。\n\n⚠️ 需事先預約導覽行程',
+    tags: ['鐘乳石洞', '神秘谷地', '需預約', '史前遺跡', '特殊體驗'],
+    mapUrl: 'https://maps.app.goo.gl/sX4d5EZZBnFEV',
+    ig: 'valley_of_gangala',
+    time: '約 1.5 小時', budget: '¥2,500（導覽費）',
+    hours: '09:00〜17:30（最終場 16:00 出發）', resv: '必須預約', resvNote: '需至官網提前預約導覽，旺季建議 1〜2 個月前訂',
+    trans: '🚗 租車從那霸市區約 30 分｜🚌 那霸巴士 54 號至玉泉洞前站，步行約 5 分（約 50 分）',
+    lat: 26.1526, lng: 127.7694,
+  },
+  {
+    id: 39, area: 'south', color: '#702459', areaName: '沖繩南部',
+    name: 'ケイブカフェ CAVE CAFE', type: '主題咖啡廳',
+    emoji: '🦇',
+    desc: '位於天然鐘乳石洞穴中的超特色咖啡廳，在洞穴岩石環繞的奇幻氛圍中享用飲品。是ガンガラーの谷導覽行程的起點，景象震撼難忘。',
+    tags: ['洞穴咖啡廳', '超特色', '絕無僅有', 'Instagram打卡'],
+    mapUrl: 'https://maps.app.goo.gl/EYLTqhxSCWZfG',
+    time: '約 30 分鐘', budget: '¥500〜1,000',
+    hours: '09:00〜17:30（配合 Gangala 導覽時間）', resv: '必須預約', resvNote: '需與 Gangala ガンガラーの谷同步預約，咖啡廳為導覽起點',
+    trans: '🚗 租車從那霸市區約 30 分｜🚌 那霸巴士 54 號至玉泉洞前站，步行約 5 分｜與 Gangala 同地點',
+    lat: 26.1528, lng: 127.7696,
+  },
+];
+
+// ── Area order ──────────────────────────────────────────
+const areaOrder = ['naha','minatogawa','kokusai','north','american','banta','senaga','south'];
+const areaLabels = {
+  naha: '🏙️ 那霸市區',
+  minatogawa: '🏘️ 港川外人住宅',
+  kokusai: '🛍️ 那霸國際通',
+  north: '🌊 沖繩北部',
+  american: '🇺🇸 美浜・美國村',
+  banta: '🌅 中部海岸',
+  senaga: '🏝️ 瀨長島',
+  south: '🌿 沖繩南部',
+};
+
+// ── Map init ─────────────────────────────────────────────
+const map = L.map('map', { zoomControl: false }).setView([26.35, 127.78], 10);
+L.control.zoom({ position: 'topleft' }).addTo(map);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19
+}).addTo(map);
+
+// ── Marker icon factory ───────────────────────────────────
+function makeIcon(color, num) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
+    <path d="M17 0C7.6 0 0 7.6 0 17c0 10.5 17 27 17 27S34 27.5 34 17C34 7.6 26.4 0 17 0z" fill="${color}"/>
+    <circle cx="17" cy="17" r="11" fill="white"/>
+    <text x="17" y="22" text-anchor="middle" font-size="${num > 9 ? '10' : '11'}" font-weight="700" fill="${color}" font-family="Arial,sans-serif">${num}</text>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [34, 44],
+    iconAnchor: [17, 44],
+    popupAnchor: [0, -44]
+  });
+}
+
+// ── Build markers & popups ────────────────────────────────
+const markers = {};
+
+spots.forEach(s => {
+  const marker = L.marker([s.lat, s.lng], { icon: makeIcon(s.color, s.id) })
+    .addTo(map);
+
+  const igHtml = s.ig ? `<div style="margin-top:5px;font-size:0.7rem;color:#9f7aea;">📸 IG: @${s.ig}</div>` : '';
+  const tagsHtml = s.tags.map(t => `<span class="p-tag">${t}</span>`).join('');
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name)}&ll=${s.lat},${s.lng}`;
+  const mapsHtml = `<a href="${mapsUrl}" target="_blank" class="popup-maps">📍 在 Google Maps 中查看</a>`;
+
+  const resvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
+  const resvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
+  const resvNoteHtml = s.resvNote ? `<div class="p-resv-note">💡 ${s.resvNote}</div>` : '';
+
+  const transHtml = s.trans ? `<div class="p-trans-box"><strong>🚌 交通方式</strong>${s.trans}</div>` : '';
+
+  const infoHtml = `
+    <div class="p-info-row">
+      <span class="p-info-time">⏱ ${s.time}</span>
+      <span class="p-info-budget">💴 ${s.budget}</span>
+    </div>
+    <div class="p-hours-row">⏰ <strong>${s.hours}</strong>
+      <span class="resv-badge ${resvClass}">${resvIcon} ${s.resv}</span>
+    </div>
+    ${resvNoteHtml}
+    ${transHtml}`;
+
+  const popupContent = `
+    <div class="popup-header" style="background:${s.color}">
+      ${s.emoji} ${s.name}
+    </div>
+    <div class="popup-body">
+      <div class="p-type">📂 ${s.type}｜📌 ${s.areaName}</div>
+      ${infoHtml}
+      <div class="p-desc">${s.desc.replace(/\n/g,'<br>')}</div>
+      ${igHtml}
+      <div class="p-tags">${tagsHtml}</div>
+    </div>
+    ${mapsHtml}
+  `;
+
+  marker.bindPopup(popupContent, {
+    className: 'custom-popup',
+    maxWidth: 280,
+    minWidth: 240,
+  });
+
+  marker.on('click', () => {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    const card = document.querySelector(`.card[data-id="${s.id}"]`);
+    if (card) {
+      card.classList.add('active');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+
+  markers[s.id] = marker;
+});
+
+// ── Build cards ────────────────────────────────────────────
+function buildCards(filterArea) {
+  const list = document.getElementById('cardsList');
+  list.innerHTML = '';
+
+  let lastArea = null;
+
+  const filteredSpots = filterArea === 'all'
+    ? [...spots].sort((a,b) => areaOrder.indexOf(a.area) - areaOrder.indexOf(b.area))
+    : spots.filter(s => s.area === filterArea);
+
+  filteredSpots.forEach(s => {
+    if (s.area !== lastArea) {
+      const label = document.createElement('div');
+      label.className = 'area-label';
+      label.textContent = areaLabels[s.area];
+      list.appendChild(label);
+      lastArea = s.area;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = s.id;
+    card.dataset.area = s.area;
+    card.style.borderLeftColor = s.color;
+
+    const tagsHtml = s.tags.slice(0,3).map(t => `<span class="meta-tag">${t}</span>`).join('');
+
+    const cResvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
+    const cResvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
+    card.innerHTML = `
+      <button class="card-add-btn" onclick="event.stopPropagation();showAddMenu(${s.id},this)" title="加入自訂行程">＋</button>
+      <div class="card-top">
+        <div class="card-num" style="background:${s.color}">${s.id}</div>
+        <div class="card-name">${s.emoji} ${s.name}</div>
+        <div class="card-type">${s.type}</div>
+      </div>
+      <div class="card-desc">${s.desc.split('\n')[0].substring(0, 85)}${s.desc.length > 85 ? '…' : ''}</div>
+      <div class="card-info-row">
+        <span class="info-time">⏱ ${s.time}</span>
+        <span class="info-budget">💴 ${s.budget}</span>
+      </div>
+      <div class="card-hours-row">
+        <span class="card-hours">⏰ ${s.hours}</span>
+        <span class="resv-badge ${cResvClass}">${cResvIcon} ${s.resv}</span>
+      </div>
+      ${s.trans ? `<div class="card-trans-row">🚌 <span>${s.trans.split('｜')[0]}</span></div>` : ''}
+      <div class="card-meta">${tagsHtml}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      map.setView([s.lat, s.lng], 15, { animate: true });
+      markers[s.id].openPopup();
+    });
+
+    list.appendChild(card);
+  });
+}
+
+buildCards('all');
+
+// ── Filter buttons ────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const area = btn.dataset.area;
+    buildCards(area);
+
+    if (area !== 'all') {
+      const areaSpots = spots.filter(s => s.area === area);
+      if (areaSpots.length > 0) {
+        const bounds = L.latLngBounds(areaSpots.map(s => [s.lat, s.lng]));
+        map.fitBounds(bounds, { padding: [60, 60] });
+      }
+    } else {
+      map.setView([26.35, 127.78], 10, { animate: true });
+    }
+  });
+});
+
+// ── Tab switch ────────────────────────────────────────────
+function switchTab(tab) {
+  var wasCustom = document.getElementById('tabCustom').classList.contains('active');
+  document.getElementById('tabSpots').classList.toggle('active', tab === 'spots');
+  document.getElementById('tabItin').classList.toggle('active', tab === 'itin');
+  document.getElementById('tabCustom').classList.toggle('active', tab === 'custom');
+  document.getElementById('panelSpots').style.display = tab === 'spots' ? 'flex' : 'none';
+  document.getElementById('panelItin').style.display  = tab === 'itin' ? 'flex' : 'none';
+  document.getElementById('panelCustom').style.display = tab === 'custom' ? 'flex' : 'none';
+  if (tab === 'custom') {
+    setDefaultMarkersVisible(false);
+    renderCustom();
+  } else {
+    customMapLayer.clearLayers();
+    document.getElementById('customMapLegend').style.display = 'none';
+    setDefaultMarkersVisible(true);
+    if (wasCustom) map.setView([26.35, 127.78], 10, { animate: true });
+  }
+  updateStatsBar();
+}
+
+// ── Itinerary data ────────────────────────────────────────
+const itinerary = [
+  {
+    day: 1, color: '#0987a0',
+    title: 'Day 1｜無車｜機場 → 瀨長島 → 那霸市區',
+    theme: '抵台輕鬆遊・不需租車',
+    transport: '🚕 計程車 + 🚝 Yui Rail',
+    tip: '建議先去瀨長島再到市區：瀨長島在機場旁，順路不繞路，傍晚最美！',
+    items: [
+      { time: '抵達', icon: '✈️', name: '那霸機場落地', note: '取行李、前往市區飯店 check-in', warn: '' },
+      { time: '下午', icon: '🏝️', name: '瀨長島 ウミカジテラス', spotId: 32, note: '計程車從機場 15 分，地中海風格、海景、看飛機', warn: '' },
+      { time: '',     icon: '🍧', name: 'Ice Terrace', spotId: 33, note: '島上特色冰品，邊吃邊看海', warn: '' },
+      { time: '',     icon: '🍔', name: 'チムフガス 氾濫漢堡', spotId: 35, note: '份量誇張的爆漿漢堡', warn: '' },
+      { time: '',     icon: '🪨', name: '子宝岩', spotId: 37, note: '散步 5 分鐘，免費', warn: '' },
+      { time: '傍晚', icon: '🚕', name: '計程車回那霸市區', note: '約 15 分鐘', warn: '' },
+      { time: '傍晚', icon: '🛍️', name: '那覇 国際通り', spotId: 14, note: '購物、逛伴手禮', warn: '' },
+      { time: '',     icon: '🍦', name: 'Fontana Gelato', spotId: 16, note: '邊走邊吃義式冰淇淋', warn: '' },
+      { time: '',     icon: '🪆', name: 'あっぱりしゃん', spotId: 17, note: '琉球雜貨選物', warn: '' },
+      { time: '',     icon: '👕', name: 'Splash okinawa', spotId: 15, note: '沖繩限定服飾', warn: '' },
+      { time: '晚餐', icon: '🍜', name: 'しむじょう 沖繩麵', spotId: 18, note: '正宗老字號，15:00 就關要早去', warn: '注意早關門！' },
+      { time: '夜晚', icon: '🏪', name: '牧志公設市場', spotId: 1, note: '感受市場氣氛，逛逛明天想買的', warn: '' },
+    ],
+    summary: ['景點 10 個', '以計程車＋步行為主', '瀨長島→那霸最順路']
+  },
+  {
+    day: 2, color: '#38a169',
+    title: 'Day 2｜租車｜沖繩北部全天',
+    theme: '北部大探索・全程自駕',
+    transport: '🚗 租車（全天）・建議加滿油出發',
+    tip: '北部景點最遠！全程約 200km，早出發才夠玩。BANTA CAFE 先喝咖啡再繼續衝。',
+    items: [
+      { time: '07:30', icon: '🚗', name: '那霸出發', note: '早出發是北部一天的關鍵', warn: '' },
+      { time: '08:00', icon: '🍳', name: 'C&C BREAKFAST', spotId: 7, note: '那霸市區早午餐（08:00 開），週三公休注意', warn: '' },
+      { time: '09:30', icon: '🚗', name: '北上出發', note: '沖繩自動車道', warn: '' },
+      { time: '10:20', icon: '🌅', name: 'BANTA CAFE', spotId: 31, note: '讀谷村懸崖咖啡，俯瞰東海', warn: '' },
+      { time: '11:30', icon: '🚗', name: '繼續北上', note: '往美ら海水族館約 1 小時', warn: '' },
+      { time: '13:00', icon: '🐋', name: '沖縄美ら海水族館', spotId: 22, note: '建議停留 2〜2.5 小時，鯨鯊必看！', warn: '' },
+      { time: '15:30', icon: '🌳', name: '備瀬のフクギ並木', spotId: 23, note: '水族館開車 10 分', warn: '' },
+      { time: '',     icon: '🚲', name: 'Namiki Bike Rentals 租腳踏車', spotId: 24, note: '現場租借，騎進林蔭大道', warn: '' },
+      { time: '16:30', icon: '🚗', name: '回程南下', note: '', warn: '' },
+      { time: '17:30', icon: '🌊', name: 'ブセナ海中公園', spotId: 19, note: '回程順路停靠（注意 18:00 關）', warn: '最晚 17:30 前到！' },
+      { time: '',     icon: '🚢', name: '玻璃底船', spotId: 20, note: '約 30 分鐘一趟', warn: '' },
+      { time: '',     icon: '🗼', name: '海中展望塔', spotId: 21, note: '海底 360° 觀賞', warn: '' },
+      { time: '19:30', icon: '🏠', name: '返回那霸', note: '約 1.5 小時車程', warn: '' },
+      { time: '晚餐', icon: '🍩', name: 'サーターアンダギー歩', spotId: 5, note: '回市區買甜甜圈當宵夜', warn: '' },
+    ],
+    summary: ['景點 8 個', '全程約 200km', '建議 07:30 出發']
+  },
+  {
+    day: 3, color: '#702459',
+    title: 'Day 3｜租車｜南部 → 港川 → 美國村 → 瀨長島',
+    theme: '文青購物＋夕陽收尾',
+    transport: '🚗 租車（全天）・傍晚還車前最後去瀨長島',
+    tip: 'Gangala 必須提前預約！建議現在就去官網訂 09:00 場次，否則這天行程需調整。',
+    items: [
+      { time: '07:00', icon: '🍙', name: 'ポーたま 牧志市場店', spotId: 6, note: '沖繩靈魂早餐，07:00 開賣', warn: '' },
+      { time: '08:30', icon: '🚗', name: '出發南部', note: '那霸市區出發約 30 分', warn: '' },
+      { time: '09:00', icon: '☕', name: 'CAVE CAFE 洞穴咖啡', spotId: 39, note: 'Gangala 導覽起點，先喝杯咖啡', warn: '🔴 必須預約！' },
+      { time: '',     icon: '🌿', name: 'Gangala ガンガラーの谷', spotId: 38, note: '神秘谷地導覽約 1.5 小時', warn: '🔴 必須預約，旺季提前 1〜2 月！' },
+      { time: '11:00', icon: '🚗', name: '出發港川', note: '約 20 分鐘', warn: '' },
+      { time: '11:20', icon: '🏘️', name: '港川ステイツサイドタウン', spotId: 9, note: '舊美軍宿舍改建文青聚落', warn: '' },
+      { time: '',     icon: '🌸', name: 'THE FLAVOR DESIGN', spotId: 10, note: '沖繩香水伴手禮', warn: '' },
+      { time: '',     icon: '👗', name: 'American Wave 古著', spotId: 11, note: '美式復古服飾', warn: '' },
+      { time: '',     icon: '🍮', name: 'ほうき星 甜點咖啡', spotId: 12, note: '午餐後下午茶，週三公休', warn: '' },
+      { time: '13:30', icon: '🚗', name: '出發美國村', note: '約 20 分鐘', warn: '' },
+      { time: '14:00', icon: '🇺🇸', name: '美浜アメリカンビレッジ', spotId: 25, note: '沖繩中部最大購物娛樂區', warn: '' },
+      { time: '',     icon: '🍟', name: 'A&W', spotId: 26, note: '沖繩限定 Root Beer 必喝！', warn: '' },
+      { time: '',     icon: '🩴', name: 'OKICHU 沖忠 人字拖', spotId: 27, note: '沖繩必買伴手禮', warn: '' },
+      { time: '',     icon: '🌮', name: 'タコライス きじむなぁ', spotId: 28, note: '沖繩創意塔可飯', warn: '' },
+      { time: '',     icon: '🎪', name: 'American Depot', spotId: 29, note: '美式古著雜貨', warn: '' },
+      { time: '17:00', icon: '🚗', name: '出發瀨長島', note: '約 15 分鐘', warn: '' },
+      { time: '17:15', icon: '🏝️', name: '瀨長島 ウミカジテラス', spotId: 32, note: '夕陽時刻再訪，最美時段', warn: '' },
+      { time: '',     icon: '🥞', name: '幸せのパンケーキ', spotId: 34, note: '海景舒芙蕾鬆餅，建議提前預約', warn: '🟡 建議提前 1〜2 天預約' },
+      { time: '18:30', icon: '🍝', name: 'POSILLIPO 義式晚餐', spotId: 36, note: '浪漫海景收尾', warn: '🟡 提前 3〜5 天預約海景座！' },
+      { time: '19:30', icon: '🏁', name: '還車 / 回飯店', note: '完美收尾', warn: '' },
+    ],
+    summary: ['景點 14 個', 'Gangala 必須提前預約', '傍晚瀨長島看夕陽收尾']
+  },
+  {
+    day: 4, color: '#4a5568',
+    title: 'Day 4｜無車｜那霸市區 → 機場出發',
+    theme: '出發日・把握最後時光',
+    transport: '🚝 Yui Rail + 🚶 步行・行李寄放飯店再出發',
+    tip: '行李可請飯店代為保管到下午，輕鬆逛完牧志市場周邊再搭 Yui Rail 到機場，那霸機場站直達！',
+    items: [
+      { time: '07:30', icon: '☕', name: 'コーヒースタンド小嶺', spotId: 4,  note: '牧志市場旁，手沖咖啡開啟最後一天', warn: '' },
+      { time: '08:00', icon: '🫘', name: 'じーまーみ豆腐専門店 花商', spotId: 3,  note: '花生豆腐，沖繩特色早點', warn: '' },
+      { time: '08:30', icon: '🏪', name: '那霸市第一牧志公設市場', spotId: 1,  note: '最後一次採購伴手禮食材', warn: '' },
+      { time: '09:30', icon: '🍩', name: 'サーターアンダギー歩', spotId: 5,  note: '買一袋帶上飛機當點心！', warn: '' },
+      { time: '10:00', icon: '🍔', name: 'Jef ジェフ サンライズ那覇店', spotId: 8,  note: '苦瓜漢堡！沖繩限定，離開前最後機會', warn: '' },
+      { time: '10:45', icon: '🛍️', name: '那覇 国際通り 最後採購', spotId: 14, note: '補買沒買到的伴手禮', warn: '' },
+      { time: '11:30', icon: '🚝', name: 'Yui Rail 前往機場', note: '縣廳前站或旭橋站搭車，約 12 分鐘到那霸機場', warn: '' },
+      { time: '12:00', icon: '✈️', name: '那霸機場 Check-in', note: '建議起飛前 2 小時抵達辦理登機', warn: '' },
+    ],
+    summary: ['景點 5 個', '以步行＋Yui Rail 為主', '行李可寄放飯店到出發前']
+  }
+];
+
+// ── Render Itinerary ──────────────────────────────────────
+function buildItinerary() {
+  const container = document.getElementById('itinList');
+  container.innerHTML = '';
+
+  itinerary.forEach((day, di) => {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'itin-day';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'itin-day-header';
+    hdr.style.background = `linear-gradient(135deg, ${day.color}, ${day.color}cc)`;
+    hdr.innerHTML = `
+      <div>
+        <span class="day-num">Day ${day.day}</span>${day.title.replace(/^Day \d｜/, '')}
+        <span class="day-theme">${day.theme}</span>
+        <span class="day-transport">${day.transport}</span>
+      </div>`;
+    dayDiv.appendChild(hdr);
+
+    // Tip
+    if (day.tip) {
+      const tip = document.createElement('div');
+      tip.className = 'itin-tip';
+      tip.innerHTML = `💡 ${day.tip}`;
+      dayDiv.appendChild(tip);
+    }
+
+    // Items
+    const itemsDiv = document.createElement('div');
+    itemsDiv.className = 'itin-items';
+
+    day.items.forEach((item, ii) => {
+      const hasSpot = !!item.spotId;
+      const spot = hasSpot ? spots.find(s => s.id === item.spotId) : null;
+      const isLast = ii === day.items.length - 1;
+
+      const row = document.createElement('div');
+      row.className = 'itin-item' + (hasSpot ? '' : ' no-spot');
+
+      const numBadge = spot
+        ? `<span class="itin-num" style="background:${spot.color}">${spot.id}</span>`
+        : '';
+
+      row.innerHTML = `
+        <div class="itin-time">${item.time}</div>
+        <div class="itin-dot-col">
+          <div class="itin-dot" style="color:${day.color}"></div>
+          ${!isLast ? '<div class="itin-line"></div>' : ''}
+        </div>
+        <div class="itin-content">
+          <div class="itin-name">${item.icon} ${item.name}${numBadge}</div>
+          ${item.note ? `<div class="itin-note">${item.note}</div>` : ''}
+          ${item.warn ? `<div class="itin-warn">${item.warn}</div>` : ''}
+        </div>`;
+
+      if (hasSpot && spot) {
+        row.addEventListener('click', () => {
+          map.setView([spot.lat, spot.lng], 15, { animate: true });
+          markers[spot.id].openPopup();
+        });
+      }
+
+      itemsDiv.appendChild(row);
+    });
+
+    dayDiv.appendChild(itemsDiv);
+
+    // Summary
+    const sumDiv = document.createElement('div');
+    sumDiv.className = 'itin-summary';
+    sumDiv.innerHTML = day.summary.map(s => `<span>📌 ${s}</span>`).join('');
+    dayDiv.appendChild(sumDiv);
+
+    container.appendChild(dayDiv);
+  });
+}
+
+buildItinerary();
+
+// ── Custom Itinerary ─────────────────────────────────────
+let customItin = JSON.parse(localStorage.getItem('oki_custom') || '[]');
+const dayColors = ['#0987a0','#38a169','#805ad5','#e53e3e','#d69e2e','#dd6b20','#3182ce','#702459'];
+const customMapLayer = L.layerGroup().addTo(map);
+let pickerTargetDayId = null;
+let activeAddMenu = null;
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function saveCustom() {
+  try {
+    localStorage.setItem('oki_custom', JSON.stringify(customItin));
+  } catch (e) {
+    alert('儲存空間不足！請刪除一些照片後再試。');
+  }
+}
+
+function addCustomDay() {
+  const dayNum = customItin.length + 1;
+  customItin.push({ id: Date.now(), title: 'Day ' + dayNum, items: [] });
+  saveCustom();
+  renderCustom();
+}
+
+function delCustomDay(id) {
+  if (!confirm('確定要刪除這天行程嗎？')) return;
+  customItin = customItin.filter(d => d.id !== id);
+  saveCustom();
+  renderCustom();
+}
+
+function updateDayTitle(id, val) {
+  const d = customItin.find(d => d.id === id);
+  if (d) { d.title = val; saveCustom(); }
+}
+
+function addSpotToCustomDay(dayId, spotId) {
+  const d = customItin.find(d => d.id === dayId);
+  const s = spots.find(s => s.id === spotId);
+  if (!d || !s) return;
+  d.items.push({ id: Date.now(), spotId: s.id, name: s.emoji + ' ' + s.name, time: '', note: '' });
+  saveCustom();
+  renderCustom();
+  switchTab('custom');
+}
+
+function addFreeItemToDay(dayId) {
+  const d = customItin.find(d => d.id === dayId);
+  if (!d) return;
+  d.items.push({ id: Date.now(), spotId: null, name: '', time: '', note: '' });
+  saveCustom();
+  renderCustom();
+}
+
+function delCustomItem(dayId, itemId) {
+  const d = customItin.find(d => d.id === dayId);
+  if (!d) return;
+  d.items = d.items.filter(i => i.id !== itemId);
+  saveCustom();
+  renderCustom();
+}
+
+function moveCustomItem(dayId, itemId, dir) {
+  const d = customItin.find(d => d.id === dayId);
+  if (!d) return;
+  const idx = d.items.findIndex(i => i.id === itemId);
+  const ni = idx + dir;
+  if (ni < 0 || ni >= d.items.length) return;
+  [d.items[idx], d.items[ni]] = [d.items[ni], d.items[idx]];
+  saveCustom();
+  renderCustom();
+}
+
+function updateItemField(dayId, itemId, field, val) {
+  const d = customItin.find(d => d.id === dayId);
+  if (!d) return;
+  const item = d.items.find(i => i.id === itemId);
+  if (item) { item[field] = val; saveCustom(); }
+}
+
+// ── Photo Functions ──
+let photoTargetDayId = null;
+let photoTargetItemId = null;
+let lightboxPhotos = [];
+let lightboxIndex = 0;
+const PHOTO_MAX_DIM = 800;
+
+function triggerPhotoUpload(dayId, itemId) {
+  photoTargetDayId = dayId;
+  photoTargetItemId = itemId;
+  const input = document.getElementById('photoFileInput');
+  input.value = '';
+  input.click();
+}
+
+document.getElementById('photoFileInput').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  let pending = files.length;
+  files.forEach(function(file) {
+    resizeImage(file, function(dataUrl) {
+      const d = customItin.find(function(d) { return d.id === photoTargetDayId; });
+      if (!d) return;
+      const item = d.items.find(function(i) { return i.id === photoTargetItemId; });
+      if (!item) return;
+      if (!item.photos) item.photos = [];
+      item.photos.push(dataUrl);
+      pending--;
+      if (pending <= 0) {
+        saveCustom();
+        renderCustom();
+      }
+    });
+  });
+});
+
+function resizeImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width, h = img.height;
+      if (w > PHOTO_MAX_DIM || h > PHOTO_MAX_DIM) {
+        if (w > h) { h = Math.round(h * PHOTO_MAX_DIM / w); w = PHOTO_MAX_DIM; }
+        else { w = Math.round(w * PHOTO_MAX_DIM / h); h = PHOTO_MAX_DIM; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function deletePhoto(dayId, itemId, photoIndex) {
+  const d = customItin.find(function(d) { return d.id === dayId; });
+  if (!d) return;
+  const item = d.items.find(function(i) { return i.id === itemId; });
+  if (!item || !item.photos) return;
+  item.photos.splice(photoIndex, 1);
+  saveCustom();
+  renderCustom();
+}
+
+function openLightbox(photos, index) {
+  lightboxPhotos = photos;
+  lightboxIndex = index;
+  const lb = document.getElementById('photoLightbox');
+  document.getElementById('lightboxImg').src = photos[index];
+  lb.classList.add('active');
+  updateLightboxNav();
+}
+
+function closeLightbox() {
+  document.getElementById('photoLightbox').classList.remove('active');
+}
+
+function navLightbox(dir) {
+  lightboxIndex += dir;
+  if (lightboxIndex < 0) lightboxIndex = lightboxPhotos.length - 1;
+  if (lightboxIndex >= lightboxPhotos.length) lightboxIndex = 0;
+  document.getElementById('lightboxImg').src = lightboxPhotos[lightboxIndex];
+  updateLightboxNav();
+}
+
+function updateLightboxNav() {
+  var prev = document.querySelector('.lb-prev');
+  var next = document.querySelector('.lb-next');
+  prev.style.display = lightboxPhotos.length > 1 ? '' : 'none';
+  next.style.display = lightboxPhotos.length > 1 ? '' : 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('photoLightbox').classList.contains('active')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') navLightbox(-1);
+  if (e.key === 'ArrowRight') navLightbox(1);
+});
+
+(function() {
+  var lb = document.getElementById('photoLightbox');
+  var touchStartX = 0;
+  var touchStartY = 0;
+  lb.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+  lb.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    var dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx > 0) navLightbox(-1);
+    else navLightbox(1);
+  }, { passive: true });
+})();
+
+function flyToSpot(spotId) {
+  const s = spots.find(s => s.id === spotId);
+  if (!s) return;
+  map.setView([s.lat, s.lng], 15, { animate: true });
+  markers[spotId].openPopup();
+}
+
+// ── Custom Map ──
+function makeCustomIcon(color, label) {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">'
+    + '<path d="M16 0C7.2 0 0 7.2 0 16c0 10 16 26 16 26S32 26 32 16C32 7.2 24.8 0 16 0z" fill="' + color + '" stroke="#fff" stroke-width="2.5"/>'
+    + '<circle cx="16" cy="16" r="10" fill="white"/>'
+    + '<text x="16" y="20.5" text-anchor="middle" font-size="10" font-weight="800" fill="' + color + '" font-family="Arial,sans-serif">' + label + '</text>'
+    + '</svg>';
+  return L.divIcon({ html: svg, className: '', iconSize: [32, 42], iconAnchor: [16, 42], popupAnchor: [0, -42] });
+}
+
+function setDefaultMarkersVisible(mode) {
+  var opacity = mode === 'dim' ? 0.3 : mode ? 1 : 0;
+  Object.values(markers).forEach(function(m) { m.setOpacity(opacity); });
+  var defLegend = document.querySelector('.map-legend');
+  if (defLegend) defLegend.style.display = mode === true ? '' : 'none';
+}
+
+function updateCustomMap() {
+  customMapLayer.clearLayers();
+  var legend = document.getElementById('customMapLegend');
+  var legendItems = document.getElementById('customMapLegendItems');
+
+  if (!document.getElementById('tabCustom').classList.contains('active') || customItin.length === 0) {
+    legend.style.display = 'none';
+    return;
+  }
+
+  legendItems.innerHTML = '';
+  var allLatLngs = [];
+
+  customItin.forEach(function(day, di) {
+    var color = dayColors[di % dayColors.length];
+    var dayLatLngs = [];
+    var order = 0;
+
+    var li = document.createElement('div');
+    li.className = 'cml-item';
+    li.innerHTML = '<div class="cml-dot" style="background:' + color + '"></div><span>' + esc(day.title) + '</span>';
+    li.addEventListener('click', function() { zoomToCustomDay(di); });
+    legendItems.appendChild(li);
+
+    day.items.forEach(function(item) {
+      var lat, lng;
+      if (item.spotId) {
+        var spot = spots.find(function(s) { return s.id === item.spotId; });
+        if (!spot) return;
+        lat = spot.lat; lng = spot.lng;
+      } else if (item.lat && item.lng) {
+        lat = item.lat; lng = item.lng;
+      } else {
+        return;
+      }
+      order++;
+      var ll = [lat, lng];
+      dayLatLngs.push(ll);
+      allLatLngs.push(ll);
+
+      var marker = L.marker(ll, { icon: makeCustomIcon(color, order) });
+      var photoCount = (item.photos && item.photos.length) ? item.photos.length : 0;
+      var popup = '<div style="padding:10px;min-width:170px;">'
+        + '<div style="font-weight:700;color:' + color + ';font-size:0.85rem;margin-bottom:4px;">Day ' + (di+1) + ' — 第 ' + order + ' 站</div>'
+        + '<div style="font-weight:600;font-size:0.9rem;">' + esc(item.name) + '</div>'
+        + (item.time ? '<div style="color:#718096;font-size:0.78rem;margin-top:4px;">⏰ ' + esc(item.time) + '</div>' : '')
+        + (item.note ? '<div style="color:#718096;font-size:0.78rem;">📝 ' + esc(item.note) + '</div>' : '')
+        + (photoCount ? '<div style="color:#718096;font-size:0.78rem;">📷 ' + photoCount + ' 張照片</div>' : '')
+        + '</div>';
+      marker.bindPopup(popup, { maxWidth: 280, minWidth: 180 });
+      customMapLayer.addLayer(marker);
+    });
+
+    if (dayLatLngs.length > 1) {
+      customMapLayer.addLayer(L.polyline(dayLatLngs, {
+        color: color, weight: 3.5, opacity: 0.6, dashArray: '10, 8'
+      }));
+    }
+  });
+
+  legend.style.display = allLatLngs.length > 0 ? '' : 'none';
+  if (allLatLngs.length > 0) {
+    map.fitBounds(L.latLngBounds(allLatLngs), { padding: [50, 50], maxZoom: 14 });
+  }
+}
+
+function zoomToCustomDay(dayIndex) {
+  var day = customItin[dayIndex];
+  if (!day) return;
+  var lls = [];
+  day.items.forEach(function(item) {
+    if (!item.spotId) return;
+    var s = spots.find(function(sp) { return sp.id === item.spotId; });
+    if (s) lls.push([s.lat, s.lng]);
+  });
+  if (lls.length === 1) {
+    map.setView(lls[0], 15, { animate: true });
+  } else if (lls.length > 1) {
+    map.fitBounds(L.latLngBounds(lls), { padding: [50, 50], maxZoom: 15 });
+  }
+}
+
+// ── Spot Picker ──
+function openSpotPicker(dayId) {
+  pickerTargetDayId = dayId;
+  document.getElementById('spotPickerModal').style.display = 'flex';
+  const input = document.getElementById('spotSearchInput');
+  input.value = '';
+  buildSpotPickerList('');
+  input.focus();
+}
+
+function closeSpotPicker() {
+  document.getElementById('spotPickerModal').style.display = 'none';
+  pickerTargetDayId = null;
+}
+
+function buildSpotPickerList(query) {
+  const list = document.getElementById('spotPickerList');
+  list.innerHTML = '';
+  const q = query.toLowerCase();
+  let lastArea = null;
+  const sorted = [...spots].sort((a,b) => areaOrder.indexOf(a.area) - areaOrder.indexOf(b.area));
+
+  sorted.forEach(s => {
+    if (q && !s.name.toLowerCase().includes(q) && !s.type.toLowerCase().includes(q) && !s.areaName.includes(q) && !s.tags.some(t => t.includes(q))) return;
+    if (s.area !== lastArea) {
+      const label = document.createElement('div');
+      label.className = 'spot-picker-area';
+      label.textContent = areaLabels[s.area];
+      list.appendChild(label);
+      lastArea = s.area;
+    }
+    const item = document.createElement('div');
+    item.className = 'spot-picker-item';
+    item.innerHTML = '<div class="sp-num" style="background:' + s.color + '">' + s.id + '</div>'
+      + '<span class="sp-name">' + s.emoji + ' ' + esc(s.name) + '</span>'
+      + '<span class="sp-type">' + esc(s.type) + '</span>';
+    item.addEventListener('click', () => {
+      addSpotToCustomDay(pickerTargetDayId, s.id);
+      closeSpotPicker();
+    });
+    list.appendChild(item);
+  });
+
+  if (q && q.length >= 2) {
+    var divider = document.createElement('div');
+    divider.className = 'sp-global-divider';
+    divider.textContent = '🌍 找不到？搜尋全球任意地點';
+    list.appendChild(divider);
+
+    var btn = document.createElement('div');
+    btn.className = 'sp-global-btn';
+    btn.innerHTML = '🔍 搜尋「' + esc(query) + '」的全球地點';
+    btn.addEventListener('click', function() { doGlobalSearch(query); });
+    list.appendChild(btn);
+
+    var resultsDiv = document.createElement('div');
+    resultsDiv.id = 'globalSearchResults';
+    list.appendChild(resultsDiv);
+  } else if (list.children.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#a0aec0;">輸入關鍵字搜尋景點<br>或輸入任意地名全球搜尋</div>';
+  }
+}
+
+// ── Pin Drop Mode ──
+var pinDropMode = false;
+var pinDropDayId = null;
+var pinDropTempMarker = null;
+
+function enterPinDropMode(dayId) {
+  pinDropDayId = dayId;
+  pinDropMode = true;
+  document.querySelector('.map-wrapper').classList.add('map-pin-mode');
+  document.getElementById('pinDropBanner').style.display = '';
+}
+
+function exitPinDropMode() {
+  pinDropMode = false;
+  pinDropDayId = null;
+  document.querySelector('.map-wrapper').classList.remove('map-pin-mode');
+  document.getElementById('pinDropBanner').style.display = 'none';
+  if (pinDropTempMarker) { map.removeLayer(pinDropTempMarker); pinDropTempMarker = null; }
+}
+
+map.on('click', function(e) {
+  if (!pinDropMode) return;
+  if (pinDropTempMarker) map.removeLayer(pinDropTempMarker);
+
+  var lat = Math.round(e.latlng.lat * 100000) / 100000;
+  var lng = Math.round(e.latlng.lng * 100000) / 100000;
+
+  pinDropTempMarker = L.marker([lat, lng]).addTo(map);
+  var html = '<div style="padding:10px;min-width:210px;">'
+    + '<div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">📌 新增地標</div>'
+    + '<input id="pinDropName" type="text" value="新地標" style="width:100%;padding:7px 10px;border:1px solid #cbd5e0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;outline:none;" />'
+    + '<div style="display:flex;gap:6px;margin-top:10px;">'
+    + '<button onclick="confirmPinDrop(' + lat + ',' + lng + ')" style="flex:1;padding:8px;background:#1a6b8a;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">確認加入</button>'
+    + '<button onclick="exitPinDropMode()" style="flex:1;padding:8px;background:#edf2f7;color:#4a5568;border:none;border-radius:8px;font-size:0.8rem;cursor:pointer;font-family:inherit;">取消</button>'
+    + '</div></div>';
+  pinDropTempMarker.bindPopup(html, { closeButton: false, closeOnClick: false, maxWidth: 260 }).openPopup();
+  setTimeout(function() { var inp = document.getElementById('pinDropName'); if (inp) inp.select(); }, 100);
+});
+
+function confirmPinDrop(lat, lng) {
+  var inp = document.getElementById('pinDropName');
+  var name = inp ? inp.value.trim() : '新地標';
+  if (!name) name = '新地標';
+  var d = customItin.find(function(dd) { return dd.id === pinDropDayId; });
+  if (d) {
+    d.items.push({ id: Date.now(), spotId: null, name: '📌 ' + name, time: '', note: '', lat: lat, lng: lng });
+    saveCustom();
+    renderCustom();
+  }
+  exitPinDropMode();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && pinDropMode) exitPinDropMode();
+});
+
+// ── Global Place Search ──
+function doGlobalSearch(query) {
+  var container = document.getElementById('globalSearchResults');
+  if (!container) return;
+  container.innerHTML = '<div class="sp-global-loading">🔄 搜尋中...</div>';
+
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=8&accept-language=zh-TW,ja,en')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      container.innerHTML = '';
+      if (data.length === 0) {
+        container.innerHTML = '<div class="sp-global-loading">找不到結果，請嘗試其他關鍵字</div>';
+        return;
+      }
+      data.forEach(function(place) {
+        var item = document.createElement('div');
+        item.className = 'sp-global-item';
+        var displayName = place.display_name.split(',');
+        var name = displayName[0];
+        var addr = displayName.slice(1, 4).join(',');
+        item.innerHTML = '<div class="sp-g-icon">📍</div>'
+          + '<div class="sp-g-info">'
+          + '<div class="sp-g-name">' + esc(name) + '</div>'
+          + '<div class="sp-g-addr">' + esc(addr) + '</div>'
+          + '</div>';
+        item.addEventListener('click', function() {
+          addGlobalPlaceToDay(pickerTargetDayId, name, parseFloat(place.lat), parseFloat(place.lon));
+          closeSpotPicker();
+        });
+        container.appendChild(item);
+      });
+    })
+    .catch(function() {
+      container.innerHTML = '<div class="sp-global-loading">搜尋失敗，請檢查網路連線後重試</div>';
+    });
+}
+
+function addGlobalPlaceToDay(dayId, name, lat, lng) {
+  var d = customItin.find(function(d) { return d.id === dayId; });
+  if (!d) return;
+  d.items.push({ id: Date.now(), spotId: null, name: '📍 ' + name, time: '', note: '', lat: lat, lng: lng });
+  saveCustom();
+  renderCustom();
+  switchTab('custom');
+}
+
+// ── Card "+" menu ──
+function showAddMenu(spotId, btn) {
+  closeAddMenu();
+  if (customItin.length === 0) {
+    if (confirm('還沒有自訂行程！要先新增一天嗎？')) {
+      addCustomDay();
+      addSpotToCustomDay(customItin[0].id, spotId);
+    }
+    return;
+  }
+  if (customItin.length === 1) {
+    addSpotToCustomDay(customItin[0].id, spotId);
+    return;
+  }
+  const menu = document.createElement('div');
+  menu.className = 'add-to-day-menu';
+  menu.id = 'activeAddMenu';
+  const title = document.createElement('div');
+  title.className = 'atd-title';
+  title.textContent = '加入哪一天？';
+  menu.appendChild(title);
+  customItin.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'atd-item';
+    item.textContent = '📅 ' + d.title;
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addSpotToCustomDay(d.id, spotId);
+      closeAddMenu();
+    });
+    menu.appendChild(item);
+  });
+  btn.parentElement.appendChild(menu);
+  activeAddMenu = menu;
+  setTimeout(() => document.addEventListener('click', closeAddMenu, { once: true }), 0);
+}
+
+function closeAddMenu() {
+  if (activeAddMenu) { activeAddMenu.remove(); activeAddMenu = null; }
+}
+
+// ── Render Custom Itinerary ──
+function renderCustom() {
+  const container = document.getElementById('customItinList');
+  container.innerHTML = '';
+
+  if (customItin.length === 0) {
+    container.innerHTML = '<div class="custom-empty">還沒有自訂行程<br><br>點擊上方「＋ 新增一天」開始規劃<br>或在景點清單中按 <strong>＋</strong> 快速加入景點</div>';
+    return;
+  }
+
+  customItin.forEach((day, di) => {
+    const color = dayColors[di % dayColors.length];
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'custom-day';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'custom-day-header';
+    hdr.style.background = 'linear-gradient(135deg, ' + color + ', ' + color + 'cc)';
+    hdr.innerHTML = '<span class="custom-day-num">Day ' + (di+1) + '</span>'
+      + '<input class="custom-day-title" value="' + esc(day.title) + '" placeholder="輸入標題...">'
+      + '<button class="custom-day-zoom" title="在地圖上顯示此天路線">📍</button>'
+      + '<button class="custom-day-del" title="刪除此天">🗑</button>';
+    hdr.querySelector('.custom-day-title').addEventListener('change', function(){ updateDayTitle(day.id, this.value); });
+    hdr.querySelector('.custom-day-zoom').addEventListener('click', function(){ zoomToCustomDay(di); });
+    hdr.querySelector('.custom-day-del').addEventListener('click', function(){ delCustomDay(day.id); });
+    dayDiv.appendChild(hdr);
+
+    const itemsDiv = document.createElement('div');
+    itemsDiv.className = 'custom-items';
+
+    if (day.items.length === 0) {
+      itemsDiv.innerHTML = '<div style="text-align:center;padding:12px;color:#cbd5e0;font-size:0.75rem;">尚無項目，點下方按鈕新增</div>';
+    }
+
+    day.items.forEach((item, ii) => {
+      const row = document.createElement('div');
+      row.className = 'custom-item';
+
+      const topRow = document.createElement('div');
+      topRow.className = 'custom-item-row';
+
+      const timeInput = document.createElement('input');
+      timeInput.className = 'custom-item-time';
+      timeInput.value = item.time;
+      timeInput.placeholder = '時間';
+      timeInput.addEventListener('change', function(){ updateItemField(day.id, item.id, 'time', this.value); });
+
+      topRow.appendChild(timeInput);
+
+      if (item.spotId) {
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'custom-item-name';
+        nameDiv.textContent = item.name;
+        nameDiv.addEventListener('click', function(){ flyToSpot(item.spotId); });
+        topRow.appendChild(nameDiv);
+      } else if (item.lat && item.lng) {
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'custom-item-name';
+        nameDiv.textContent = item.name;
+        nameDiv.addEventListener('click', function(){ map.setView([item.lat, item.lng], 15, {animate:true}); });
+        topRow.appendChild(nameDiv);
+      } else {
+        const nameInput = document.createElement('input');
+        nameInput.className = 'custom-item-name-input';
+        nameInput.value = item.name;
+        nameInput.placeholder = '輸入項目名稱...';
+        nameInput.addEventListener('change', function(){ updateItemField(day.id, item.id, 'name', this.value); });
+        topRow.appendChild(nameInput);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'custom-item-actions';
+
+      const btnPhoto = document.createElement('button');
+      btnPhoto.className = 'custom-item-photo-btn';
+      btnPhoto.textContent = '📷';
+      btnPhoto.title = '新增照片';
+      btnPhoto.addEventListener('click', function(){ triggerPhotoUpload(day.id, item.id); });
+
+      const btnUp = document.createElement('button');
+      btnUp.textContent = '▲';
+      btnUp.title = '上移';
+      btnUp.addEventListener('click', function(){ moveCustomItem(day.id, item.id, -1); });
+
+      const btnDown = document.createElement('button');
+      btnDown.textContent = '▼';
+      btnDown.title = '下移';
+      btnDown.addEventListener('click', function(){ moveCustomItem(day.id, item.id, 1); });
+
+      const btnDel = document.createElement('button');
+      btnDel.className = 'del';
+      btnDel.textContent = '✕';
+      btnDel.title = '刪除';
+      btnDel.addEventListener('click', function(){ delCustomItem(day.id, item.id); });
+
+      actions.appendChild(btnPhoto);
+      actions.appendChild(btnUp);
+      actions.appendChild(btnDown);
+      actions.appendChild(btnDel);
+      topRow.appendChild(actions);
+
+      row.appendChild(topRow);
+
+      const noteInput = document.createElement('input');
+      noteInput.className = 'custom-item-note';
+      noteInput.value = item.note || '';
+      noteInput.placeholder = '備註...';
+      noteInput.addEventListener('change', function(){ updateItemField(day.id, item.id, 'note', this.value); });
+      row.appendChild(noteInput);
+
+      if (item.photos && item.photos.length > 0) {
+        const photosDiv = document.createElement('div');
+        photosDiv.className = 'custom-item-photos';
+        item.photos.forEach(function(src, pi) {
+          const thumb = document.createElement('div');
+          thumb.className = 'custom-photo-thumb';
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = '照片 ' + (pi + 1);
+          img.addEventListener('click', function(){ openLightbox(item.photos, pi); });
+          const del = document.createElement('button');
+          del.className = 'photo-del';
+          del.textContent = '✕';
+          del.addEventListener('click', function(e){ e.stopPropagation(); deletePhoto(day.id, item.id, pi); });
+          thumb.appendChild(img);
+          thumb.appendChild(del);
+          photosDiv.appendChild(thumb);
+        });
+        row.appendChild(photosDiv);
+      }
+
+      itemsDiv.appendChild(row);
+    });
+
+    dayDiv.appendChild(itemsDiv);
+
+    const footer = document.createElement('div');
+    footer.className = 'custom-day-footer';
+    const btnSpot = document.createElement('button');
+    btnSpot.className = 'custom-add-btn spot';
+    btnSpot.textContent = '📍 新增景點';
+    btnSpot.addEventListener('click', function(){ openSpotPicker(day.id); });
+    const btnPin = document.createElement('button');
+    btnPin.className = 'custom-add-btn pin';
+    btnPin.textContent = '📌 地圖選點';
+    btnPin.addEventListener('click', function(){ enterPinDropMode(day.id); });
+    const btnFree = document.createElement('button');
+    btnFree.className = 'custom-add-btn';
+    btnFree.textContent = '✏️ 自訂項目';
+    btnFree.addEventListener('click', function(){ addFreeItemToDay(day.id); });
+    footer.appendChild(btnSpot);
+    footer.appendChild(btnPin);
+    footer.appendChild(btnFree);
+    dayDiv.appendChild(footer);
+
+    container.appendChild(dayDiv);
+  });
+
+  updateCustomMap();
+  updateStatsBar();
+}
+
+function getSpotCategory(spotId) {
+  var s = spots.find(function(sp) { return sp.id === spotId; });
+  if (!s) return null;
+  var t = s.type;
+  if (/咖啡|カフェ|CAFE/i.test(t)) return 'cafe';
+  if (/市場|餐|小吃|麵|速食|冰|鬆餅|漢堡|料理|甜點|輕食|午餐/.test(t)) return 'food';
+  if (/商|購|品牌|雜貨|古著|選物|店/.test(t)) return 'shop';
+  return 'attraction';
+}
+
+function updateStatsBar() {
+  var bar = document.getElementById('statsBar');
+  var isCustom = document.getElementById('tabCustom').classList.contains('active');
+
+  if (!isCustom) {
+    bar.innerHTML = '<div class="stat">🏙️ <strong>4</strong> 區域</div>'
+      + '<div class="stat">🍜 <strong>15</strong> 美食</div>'
+      + '<div class="stat">🛍️ <strong>12</strong> 購物</div>'
+      + '<div class="stat">🌊 <strong>8</strong> 景點體驗</div>'
+      + '<div class="stat">☕ <strong>4</strong> 咖啡廳</div>';
+    return;
+  }
+
+  var food = 0, shop = 0, attr = 0, cafe = 0, pins = 0;
+  customItin.forEach(function(day) {
+    day.items.forEach(function(item) {
+      if (item.spotId) {
+        var cat = getSpotCategory(item.spotId);
+        if (cat === 'food') food++;
+        else if (cat === 'shop') shop++;
+        else if (cat === 'cafe') cafe++;
+        else attr++;
+      } else if (item.lat && item.lng) {
+        pins++;
+      }
+    });
+  });
+
+  var parts = [];
+  parts.push('<div class="stat">📅 <strong>' + customItin.length + '</strong> 天</div>');
+  if (food) parts.push('<div class="stat">🍜 <strong>' + food + '</strong> 美食</div>');
+  if (shop) parts.push('<div class="stat">🛍️ <strong>' + shop + '</strong> 購物</div>');
+  if (attr) parts.push('<div class="stat">🌊 <strong>' + attr + '</strong> 景點體驗</div>');
+  if (cafe) parts.push('<div class="stat">☕ <strong>' + cafe + '</strong> 咖啡廳</div>');
+  if (pins) parts.push('<div class="stat">📌 <strong>' + pins + '</strong> 自訂地標</div>');
+  bar.innerHTML = parts.join('');
+}
+
+renderCustom();
+
+// ── Editable Header ──
+const hdrTitle = document.getElementById('headerTitle');
+const hdrSub = document.getElementById('headerSubtitle');
+const savedTitle = localStorage.getItem('oki_header_title');
+const savedSub = localStorage.getItem('oki_header_subtitle');
+if (savedTitle) hdrTitle.textContent = savedTitle;
+if (savedSub) hdrSub.textContent = savedSub;
+hdrTitle.addEventListener('blur', function(){ localStorage.setItem('oki_header_title', this.textContent); });
+hdrSub.addEventListener('blur', function(){ localStorage.setItem('oki_header_subtitle', this.textContent); });
+hdrTitle.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+hdrSub.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+const hdrFlag = document.getElementById('headerFlag');
+const savedFlag = localStorage.getItem('oki_header_flag');
+if (savedFlag) hdrFlag.textContent = savedFlag;
+hdrFlag.addEventListener('blur', function(){ localStorage.setItem('oki_header_flag', this.textContent); });
+hdrFlag.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+
+// ── Onboarding Guide ──
+const obSteps = [
+  { icon: '👋', title: '歡迎使用沖繩攻略地圖', desc: '這是一份可自訂的互動式旅遊地圖，包含 39 個精選景點與完整行程規劃。\n\n以下快速介紹主要功能，讓你馬上上手！' },
+  { icon: '✏️', title: '標題可以自由修改', desc: '點擊上方的旗幟圖示、標題或副標題，都可以直接編輯成你喜歡的內容。修改後會自動儲存。' },
+  { icon: '＋', title: '一鍵加入景點到行程', desc: '每張景點卡片右上角都有 ＋ 按鈕，點擊即可快速將景點加入你的自訂行程。' },
+  { icon: '🗓️', title: '打造你的專屬行程', desc: '切換到「✏️ 自訂行程」分頁，可以新增天數、排序景點、填寫時間與備註，規劃完美旅程。' },
+  { icon: '📌', title: '地圖選點放置地標', desc: '在自訂行程中點擊「📌 地圖選點」，接著在地圖上任意位置點擊即可放置地標，輸入名稱後加入行程。按 Esc 可隨時取消。' },
+  { icon: '🌍', title: '搜尋全球任意地點', desc: '點擊「📍 新增景點」開啟選單，在搜尋框輸入任何地名後按 Enter，即可搜尋全球地點加入行程。\n\n不只沖繩，任何國家都能用！' },
+  { icon: '💾', title: '自動儲存，隨時繼續', desc: '所有自訂內容（標題、行程、地標）都會自動儲存在瀏覽器中，關掉重開也不會消失。\n\n按標題列的 ↺ 可一鍵重置，？ 可重看本教學。' },
+];
+let obStep = 0;
+
+function renderObStep() {
+  const s = obSteps[obStep];
+  document.getElementById('obIcon').textContent = s.icon;
+  document.getElementById('obTitle').textContent = s.title;
+  document.getElementById('obDesc').innerHTML = s.desc.replace(/\n/g, '<br>');
+  document.getElementById('obDots').innerHTML = obSteps.map((_, i) =>
+    '<div class="dot' + (i === obStep ? ' active' : '') + '"></div>'
+  ).join('');
+  document.getElementById('obSkip').style.display = obStep === obSteps.length - 1 ? 'none' : '';
+  document.getElementById('obNext').textContent = obStep === obSteps.length - 1 ? '開始使用 🚀' : '下一步';
+}
+
+function startOnboarding() {
+  obStep = 0;
+  document.getElementById('onboardOverlay').style.display = 'flex';
+  renderObStep();
+}
+
+function nextOnboardStep() {
+  if (obStep < obSteps.length - 1) {
+    obStep++;
+    renderObStep();
+  } else {
+    endOnboarding();
+  }
+}
+
+function endOnboarding() {
+  document.getElementById('onboardOverlay').style.display = 'none';
+  localStorage.setItem('oki_onboarding_done', '1');
+}
+
+if (!localStorage.getItem('oki_onboarding_done')) {
+  startOnboarding();
+}
+
+// ── Print / Export PDF ──
+function openPrintModal() {
+  document.getElementById('printModalOverlay').style.display = 'flex';
+}
+function closePrintModal() {
+  document.getElementById('printModalOverlay').style.display = 'none';
+}
+
+function doPrint(mode) {
+  closePrintModal();
+
+  if (mode === 'custom') {
+    if (customItin.length === 0) {
+      alert('還沒有自訂行程！請先到「✏️ 自訂行程」新增內容。');
+      return;
+    }
+    document.getElementById('panelItin').style.display = 'none';
+    document.getElementById('panelCustom').style.display = 'flex';
+
+    const style = document.createElement('style');
+    style.id = 'printCustomOverride';
+    style.textContent = '@media print { #panelItin { display:none!important; } #panelCustom { display:flex!important; overflow:visible; } .custom-toolbar { display:none; } .custom-day-del { display:none; } .custom-day-footer { display:none; } .custom-item-actions { display:none; } .custom-item-photo-btn { display:none!important; } .custom-item-time { border:none; background:transparent; } .custom-item-note { border:none; background:transparent; } .custom-item-name-input { border:none; background:transparent; } .custom-day-title { border:none; background:transparent; color:#fff; } .custom-items { overflow:visible; } .custom-day { break-inside:avoid; } .custom-photo-thumb .photo-del { display:none!important; } .custom-photo-thumb { width:50px; height:50px; } }';
+    document.head.appendChild(style);
+
+    window.print();
+
+    const override = document.getElementById('printCustomOverride');
+    if (override) override.remove();
+  } else {
+    window.print();
+  }
+}
+
+// ── Reset All ──
+function resetAll() {
+  if (!confirm('確定要重置所有自訂內容嗎？\n\n這會還原標題、清除自訂行程，且無法復原。')) return;
+  localStorage.removeItem('oki_header_flag');
+  localStorage.removeItem('oki_header_title');
+  localStorage.removeItem('oki_header_subtitle');
+  localStorage.removeItem('oki_custom');
+  localStorage.removeItem('oki_onboarding_done');
+  hdrFlag.textContent = '🇯🇵';
+  hdrTitle.textContent = '沖繩自由行攻略地圖';
+  hdrSub.textContent = '老辣妹精選 39 個景點・美食・購物・體驗';
+  customItin = [];
+  renderCustom();
+}
+</script>
+
+</body>
+</html>
