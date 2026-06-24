@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🇯🇵 沖繩自由行攻略地圖｜老辣妹精選</title>
+  <title>旅遊攻略地圖｜自訂行程規劃</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -316,6 +316,146 @@
     .legend-item { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
     .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
+    /* ── Trip Collection Panel ── */
+    .trip-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      font-size: 0.8rem;
+      width: 260px;
+      max-height: calc(100% - 20px);
+      display: flex;
+      flex-direction: column;
+    }
+    .trip-panel.collapsed { width: auto; }
+    .trip-panel.collapsed .trip-panel-body { display: none; }
+
+    .trip-panel-toggle {
+      background: linear-gradient(135deg, #2d3748, #1a202c);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .trip-panel-toggle:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .trip-panel:not(.collapsed) .trip-panel-toggle { border-radius: 10px 10px 0 0; }
+    .trip-panel-toggle .toggle-arrow {
+      margin-left: auto;
+      font-size: 0.65rem;
+      opacity: 0.7;
+      transition: transform 0.2s;
+    }
+    .trip-panel:not(.collapsed) .toggle-arrow { transform: rotate(180deg); }
+
+    .trip-panel-body {
+      background: rgba(255,255,255,0.97);
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      overflow-y: auto;
+      max-height: 400px;
+    }
+
+    .trip-list {
+      padding: 6px;
+    }
+    .trip-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .trip-item:hover { background: #f0f4f8; }
+    .trip-item.active {
+      background: #ebf8ff;
+      border-color: #1a6b8a;
+    }
+    .trip-item-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .trip-item-info { flex: 1; min-width: 0; }
+    .trip-item-name {
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: #1a202c;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .trip-item-meta {
+      font-size: 0.65rem;
+      color: #a0aec0;
+      margin-top: 1px;
+    }
+    .trip-item-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .trip-item:hover .trip-item-actions { opacity: 1; }
+    .trip-item-actions button {
+      background: #edf2f7;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 5px;
+      cursor: pointer;
+      font-size: 0.65rem;
+      color: #4a5568;
+      transition: all 0.1s;
+    }
+    .trip-item-actions button:hover { background: #e2e8f0; }
+    .trip-item-actions button.del:hover { background: #fed7d7; color: #9b2c2c; }
+
+    .trip-add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      padding: 8px;
+      border: 1px dashed #cbd5e0;
+      border-radius: 7px;
+      background: none;
+      color: #718096;
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 2px;
+    }
+    .trip-add-btn:hover { border-color: #1a6b8a; color: #1a6b8a; background: #f7fafc; }
+
+    .trip-panel-footer {
+      padding: 6px 8px 8px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.65rem;
+      color: #a0aec0;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .trip-panel { width: 220px; right: 6px; top: 6px; }
+      .trip-panel-toggle { padding: 6px 10px; font-size: 0.72rem; }
+      .trip-item-actions { opacity: 1; }
+    }
+    @media print {
+      .trip-panel { display: none !important; }
+    }
+
     /* Stats bar */
     .stats-bar {
       background: #f8fafc;
@@ -365,141 +505,6 @@
       background: #fff;
     }
     .sidebar-tab:hover:not(.active) { color: #4a5568; background: #edf2f7; }
-
-    /* ── Itinerary Timeline ── */
-    .itin-panel {
-      overflow-y: auto;
-      flex: 1;
-      padding: 10px;
-      display: none;
-    }
-    .itin-panel.active { display: block; }
-
-    .itin-day {
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-    .itin-day-header {
-      padding: 11px 14px;
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.88rem;
-    }
-    .itin-day-header .day-num {
-      font-size: 1.3rem;
-      font-weight: 900;
-      opacity: 0.9;
-      margin-right: 6px;
-    }
-    .itin-day-header .day-theme {
-      font-size: 0.72rem;
-      opacity: 0.85;
-      display: block;
-      margin-top: 1px;
-    }
-    .itin-day-header .day-transport {
-      font-size: 0.7rem;
-      background: rgba(255,255,255,0.2);
-      border-radius: 10px;
-      padding: 2px 10px;
-      margin-top: 4px;
-      display: inline-block;
-    }
-    .itin-items { background: #fff; padding: 6px 0; }
-
-    .itin-item {
-      display: flex;
-      gap: 10px;
-      padding: 7px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
-      align-items: flex-start;
-    }
-    .itin-item:hover { background: #f0f9ff; }
-    .itin-item.no-spot { cursor: default; opacity: 0.7; }
-    .itin-item.no-spot:hover { background: transparent; }
-
-    .itin-time {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #a0aec0;
-      min-width: 36px;
-      padding-top: 2px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .itin-dot-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex-shrink: 0;
-      padding-top: 3px;
-    }
-    .itin-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      border: 2px solid currentColor;
-      background: #fff;
-      flex-shrink: 0;
-    }
-    .itin-line {
-      width: 2px;
-      flex: 1;
-      background: #e2e8f0;
-      min-height: 14px;
-    }
-    .itin-content { flex: 1; min-width: 0; }
-    .itin-name {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #1a202c;
-      line-height: 1.3;
-    }
-    .itin-note {
-      font-size: 0.7rem;
-      color: #718096;
-      margin-top: 2px;
-      line-height: 1.4;
-    }
-    .itin-num {
-      font-size: 0.62rem;
-      font-weight: 700;
-      border-radius: 8px;
-      padding: 1px 6px;
-      color: #fff;
-      margin-left: 4px;
-      vertical-align: middle;
-      display: inline-block;
-    }
-    .itin-warn {
-      font-size: 0.66rem;
-      color: #c05621;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-    .itin-summary {
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      padding: 8px 14px;
-      font-size: 0.7rem;
-      color: #718096;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .itin-tip {
-      background: #fffbeb;
-      border-left: 3px solid #d69e2e;
-      border-radius: 0 8px 8px 0;
-      padding: 7px 12px;
-      margin: 8px 0;
-      font-size: 0.72rem;
-      color: #744210;
-      line-height: 1.5;
-    }
 
     @media (max-width: 768px) {
       .main { flex-direction: column; }
@@ -556,13 +561,6 @@
       .map-wrapper { display: none; }
       .stats-bar { display: none; }
       #panelSpots { display: none !important; }
-      #panelCustom { display: none !important; }
-      #panelItin { display: flex !important; overflow: visible; }
-      .itin-panel { overflow: visible; height: auto; }
-      .itin-day { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
-      .itin-day-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      .itin-item { cursor: default; }
-      .itin-item:hover { background: transparent; }
       .custom-day { break-inside: avoid; }
       .spot-picker-overlay, .onboard-overlay, .add-to-day-menu { display: none !important; }
       .photo-lightbox { display: none !important; }
@@ -588,66 +586,6 @@
       flex-shrink: 0;
     }
     .print-btn:hover { background: rgba(255,255,255,0.3); }
-
-    /* Print mode selector */
-    .print-modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 99998;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .print-modal {
-      background: #fff;
-      border-radius: 14px;
-      width: 340px;
-      max-width: 90vw;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-      overflow: hidden;
-    }
-    .print-modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #1a202c;
-    }
-    .print-modal-body { padding: 16px 20px; }
-    .print-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-size: 0.82rem;
-      color: #1a202c;
-    }
-    .print-option:hover { border-color: #1a6b8a; background: #f0f9ff; }
-    .print-option .po-icon { font-size: 1.3rem; }
-    .print-option .po-text { flex: 1; }
-    .print-option .po-text strong { display: block; font-size: 0.85rem; }
-    .print-option .po-text span { font-size: 0.72rem; color: #718096; }
-    .print-modal-footer {
-      padding: 12px 20px;
-      border-top: 1px solid #e2e8f0;
-      text-align: right;
-    }
-    .print-modal-cancel {
-      background: none;
-      border: none;
-      color: #a0aec0;
-      font-size: 0.8rem;
-      cursor: pointer;
-      padding: 6px 12px;
-      font-family: inherit;
-    }
-    .print-modal-cancel:hover { color: #718096; }
 
     /* ── Custom Map Legend ── */
     .custom-map-legend {
@@ -1314,13 +1252,13 @@
 <body>
 
 <header>
-  <div class="flag" contenteditable="true" spellcheck="false" id="headerFlag">🇯🇵</div>
+  <div class="flag" contenteditable="true" spellcheck="false" id="headerFlag">✈️</div>
   <div>
-    <h1 contenteditable="true" spellcheck="false" id="headerTitle">沖繩自由行攻略地圖</h1>
-    <p contenteditable="true" spellcheck="false" id="headerSubtitle">老辣妹精選 39 個景點・美食・購物・體驗</p>
+    <h1 contenteditable="true" spellcheck="false" id="headerTitle">我的旅程</h1>
+    <p contenteditable="true" spellcheck="false" id="headerSubtitle">點擊這裡編輯副標題</p>
   </div>
-  <div class="badge">📍 39 個地點</div>
-  <button class="print-btn" onclick="openPrintModal()" title="列印 / 匯出 PDF">🖨</button>
+  <div class="badge">📍 0 個地點</div>
+  <button class="print-btn" onclick="doPrint()" title="列印 / 匯出 PDF">🖨</button>
   <button class="reset-btn" onclick="resetAll()" title="重置所有自訂內容">↺</button>
   <button class="help-btn" onclick="startOnboarding()" title="使用說明">？</button>
 </header>
@@ -1331,7 +1269,6 @@
     <!-- Tab 切換 -->
     <div class="sidebar-tabs">
       <button class="sidebar-tab active" id="tabSpots" onclick="switchTab('spots')">📍 景點清單</button>
-      <button class="sidebar-tab" id="tabItin"  onclick="switchTab('itin')">🗓 行程規劃</button>
       <button class="sidebar-tab" id="tabCustom" onclick="switchTab('custom')">✏️ 自訂行程</button>
     </div>
 
@@ -1339,24 +1276,9 @@
     <div id="panelSpots" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="sidebar-header">
         <h2>🗂 依區域篩選</h2>
-        <div class="filters">
-          <button class="filter-btn active" data-area="all" style="background:#4a5568">全部</button>
-          <button class="filter-btn" data-area="naha" style="background:#e53e3e">那霸市區</button>
-          <button class="filter-btn" data-area="minatogawa" style="background:#dd6b20">港川外人住宅</button>
-          <button class="filter-btn" data-area="kokusai" style="background:#d69e2e">國際通</button>
-          <button class="filter-btn" data-area="north" style="background:#38a169">沖繩北部</button>
-          <button class="filter-btn" data-area="american" style="background:#3182ce">美浜・美國村</button>
-          <button class="filter-btn" data-area="banta" style="background:#805ad5">中部海岸</button>
-          <button class="filter-btn" data-area="senaga" style="background:#0987a0">瀨長島</button>
-          <button class="filter-btn" data-area="south" style="background:#702459">沖繩南部</button>
-        </div>
+        <div class="filters" id="filtersContainer"></div>
       </div>
       <div class="cards-list" id="cardsList"></div>
-    </div>
-
-    <!-- 行程規劃 panel -->
-    <div id="panelItin" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-      <div class="itin-panel active" id="itinList"></div>
     </div>
 
     <!-- 自訂行程 panel -->
@@ -1364,65 +1286,34 @@
       <div class="custom-toolbar">
         <button class="custom-add-day-btn" onclick="addCustomDay()">＋ 新增一天</button>
       </div>
-      <div class="itin-panel active" id="customItinList" style="padding:10px;"></div>
+      <div id="customItinList" style="padding:10px;overflow-y:auto;flex:1;"></div>
     </div>
 
-    <div class="stats-bar" id="statsBar">
-      <div class="stat">🏙️ <strong>4</strong> 區域</div>
-      <div class="stat">🍜 <strong>15</strong> 美食</div>
-      <div class="stat">🛍️ <strong>12</strong> 購物</div>
-      <div class="stat">🌊 <strong>8</strong> 景點體驗</div>
-      <div class="stat">☕ <strong>4</strong> 咖啡廳</div>
-    </div>
+    <div class="stats-bar" id="statsBar"></div>
   </div>
 
   <!-- Map -->
   <div class="map-wrapper">
     <div id="map"></div>
     <div class="pin-drop-banner" id="pinDropBanner" style="display:none">📌 在地圖上點擊要放置地標的位置（按 Esc 取消）</div>
-    <div class="map-legend">
-      <h4>📍 區域圖例</h4>
-      <div class="legend-item"><div class="legend-dot" style="background:#e53e3e"></div>那霸市區</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#dd6b20"></div>港川外人住宅</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#d69e2e"></div>國際通</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#38a169"></div>沖繩北部</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#3182ce"></div>美浜・美國村</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#805ad5"></div>中部海岸</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#0987a0"></div>瀨長島</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#702459"></div>沖繩南部</div>
-    </div>
+    <div class="map-legend"></div>
     <div class="custom-map-legend" id="customMapLegend" style="display:none">
       <h4>🗺️ 我的行程路線</h4>
       <div id="customMapLegendItems"></div>
     </div>
+
+    <div class="trip-panel collapsed" id="tripPanel">
+      <button class="trip-panel-toggle" onclick="toggleTripPanel()">
+        📁 我的旅程 <span class="toggle-arrow">▼</span>
+      </button>
+      <div class="trip-panel-body">
+        <div class="trip-list" id="tripList"></div>
+        <div class="trip-panel-footer">切換旅程會載入對應的自訂行程</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Print Modal -->
-<div id="printModalOverlay" class="print-modal-overlay" style="display:none" onclick="if(event.target===this)closePrintModal()">
-  <div class="print-modal">
-    <div class="print-modal-header">🖨 列印 / 匯出 PDF</div>
-    <div class="print-modal-body">
-      <div class="print-option" onclick="doPrint('itin')">
-        <div class="po-icon">🗓</div>
-        <div class="po-text">
-          <strong>預設行程（4天）</strong>
-          <span>列印內建的 Day 1〜4 行程規劃</span>
-        </div>
-      </div>
-      <div class="print-option" onclick="doPrint('custom')">
-        <div class="po-icon">✏️</div>
-        <div class="po-text">
-          <strong>我的自訂行程</strong>
-          <span>列印你自訂的行程內容</span>
-        </div>
-      </div>
-    </div>
-    <div class="print-modal-footer">
-      <button class="print-modal-cancel" onclick="closePrintModal()">取消</button>
-    </div>
-  </div>
-</div>
 
 <!-- Onboarding Guide -->
 <div id="onboardOverlay" class="onboard-overlay" style="display:none">
@@ -1456,6 +1347,180 @@
   </div>
 </div>
 
+<!-- New Trip Modal -->
+<div id="newTripModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;" onclick="if(event.target===this)closeNewTripModal()">
+  <div style="background:#fff;border-radius:14px;width:380px;max-width:92vw;box-shadow:0 10px 40px rgba(0,0,0,0.25);overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+      <h3 style="font-size:0.95rem;color:#1a202c;margin:0;">新增旅程</h3>
+      <button onclick="closeNewTripModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#a0aec0;padding:2px 6px;">✕</button>
+    </div>
+    <div style="padding:16px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">旅程名稱</label>
+        <input type="text" id="newTripName" placeholder="例如：2026 歐洲自由行" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:12px;display:flex;gap:8px;">
+        <div style="flex:0 0 60px;">
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">國旗</label>
+          <input type="text" id="newTripFlag" placeholder="✈️" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:1.1rem;font-family:inherit;outline:none;box-sizing:border-box;text-align:center;" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">副標題 <span style="font-weight:400;color:#a0aec0;">（選填）</span></label>
+          <input type="text" id="newTripSubtitle" placeholder="例如：精選景點・美食・購物" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+        </div>
+      </div>
+      <div style="font-size:0.78rem;font-weight:600;color:#4a5568;margin-bottom:8px;">選擇旅程類型</div>
+      <div id="newTripOptions" style="display:flex;flex-direction:column;gap:8px;">
+        <div onclick="selectNewTripOption('empty')" class="new-trip-option" style="padding:12px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#1a6b8a';this.style.background='#f0f9ff'" onmouseout="if(!this.classList.contains('selected')){this.style.borderColor='#e2e8f0';this.style.background=''}">
+          <div style="font-weight:700;font-size:0.85rem;">📄 空白旅程</div>
+          <div style="font-size:0.72rem;color:#718096;margin-top:2px;">從零開始，自己新增景點和區域</div>
+        </div>
+        <div onclick="selectNewTripOption('copy')" class="new-trip-option" style="padding:12px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#1a6b8a';this.style.background='#f0f9ff'" onmouseout="if(!this.classList.contains('selected')){this.style.borderColor='#e2e8f0';this.style.background=''}">
+          <div style="font-weight:700;font-size:0.85rem;">📋 複製目前旅程</div>
+          <div style="font-size:0.72rem;color:#718096;margin-top:2px;">完整複製目前旅程的景點、區域和行程</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeNewTripModal()" style="padding:8px 16px;background:#edf2f7;border:none;border-radius:8px;color:#4a5568;font-size:0.82rem;cursor:pointer;font-family:inherit;">取消</button>
+      <button onclick="confirmNewTrip()" style="padding:8px 16px;background:#1a6b8a;border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">建立旅程</button>
+    </div>
+  </div>
+</div>
+
+<!-- Area Modal -->
+<div id="areaModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;" onclick="if(event.target===this)closeAreaModal()">
+  <div style="background:#fff;border-radius:14px;width:340px;max-width:92vw;box-shadow:0 10px 40px rgba(0,0,0,0.25);overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+      <h3 id="areaModalTitle" style="font-size:0.95rem;color:#1a202c;margin:0;">新增區域</h3>
+      <button onclick="closeAreaModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#a0aec0;padding:2px 6px;">✕</button>
+    </div>
+    <div style="padding:16px;">
+      <input type="hidden" id="areaEditKey" value="" />
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">區域名稱</label>
+        <input type="text" id="areaNameInput" placeholder="例如：沖繩北谷..." style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:6px;">區域顏色</label>
+        <div id="areaColorPalette" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px;justify-content:space-between;">
+      <button id="areaDeleteBtn" onclick="deleteAreaFromModal()" style="padding:8px 12px;background:#fed7d7;border:none;border-radius:8px;color:#9b2c2c;font-size:0.78rem;cursor:pointer;font-family:inherit;display:none;">刪除區域</button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button onclick="closeAreaModal()" style="padding:8px 16px;background:#edf2f7;border:none;border-radius:8px;color:#4a5568;font-size:0.82rem;cursor:pointer;font-family:inherit;">取消</button>
+        <button onclick="saveArea()" style="padding:8px 16px;background:#1a6b8a;border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spot Modal -->
+<div id="spotModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;overflow-y:auto;" onclick="if(event.target===this)closeSpotModal()">
+  <div style="background:#fff;border-radius:14px;width:480px;max-width:92vw;max-height:90vh;box-shadow:0 10px 40px rgba(0,0,0,0.25);overflow-y:auto;margin:20px auto;">
+    <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:2;">
+      <h3 id="spotModalTitle" style="font-size:0.95rem;color:#1a202c;margin:0;">新增景點</h3>
+      <button onclick="closeSpotModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#a0aec0;padding:2px 6px;">✕</button>
+    </div>
+    <div style="padding:16px;">
+      <input type="hidden" id="spotEditId" value="" />
+      <!-- Required fields -->
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">景點名稱 *</label>
+          <input type="text" id="spotNameInput" placeholder="例如：美麗海水族館..." style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">Emoji</label>
+          <input type="text" id="spotEmojiInput" value="📍" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;text-align:center;" />
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">區域分類</label>
+        <select id="spotAreaSelect" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;background:#fff;"></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:end;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">緯度 *</label>
+          <input type="number" step="any" id="spotLatInput" placeholder="26.xxx" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px;">經度 *</label>
+          <input type="number" step="any" id="spotLngInput" placeholder="127.xxx" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+        </div>
+        <button id="spotMapPickBtn" onclick="enterSpotPinMode()" style="padding:8px 12px;background:#805ad5;border:none;border-radius:8px;color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">📌 地圖選點</button>
+      </div>
+      <!-- Collapsible optional section -->
+      <div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:10px;">
+        <button onclick="toggleSpotOptional()" style="background:none;border:none;color:#718096;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;padding:0;">▶ 更多選填欄位</button>
+        <div id="spotOptionalFields" style="display:none;margin-top:10px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">類型</label>
+              <input type="text" id="spotTypeInput" placeholder="餐廳、咖啡廳..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">標籤（逗號分隔）</label>
+              <input type="text" id="spotTagsInput" placeholder="必去, 美食, 打卡..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">描述</label>
+            <textarea id="spotDescInput" rows="3" placeholder="簡短描述這個景點..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">建議時間</label>
+              <input type="text" id="spotTimeInput" placeholder="1~2 小時" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">預算</label>
+              <input type="text" id="spotBudgetInput" placeholder="¥1,000~3,000" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">營業時間</label>
+              <input type="text" id="spotHoursInput" placeholder="10:00~22:00" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">預約</label>
+              <select id="spotResvInput" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;background:#fff;">
+                <option value="不需預約">不需預約</option>
+                <option value="建議預約">建議預約</option>
+                <option value="必須預約">必須預約</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">預約備註</label>
+            <input type="text" id="spotResvNoteInput" placeholder="建議提前預約..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">Google Maps 連結</label>
+              <input type="text" id="spotMapUrlInput" placeholder="https://maps.app.goo.gl/..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">Instagram</label>
+              <input type="text" id="spotIgInput" placeholder="@帳號" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.72rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">交通方式</label>
+            <input type="text" id="spotTransInput" placeholder="🚗 租車約30分..." style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.8rem;font-family:inherit;outline:none;box-sizing:border-box;" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;z-index:2;">
+      <button onclick="closeSpotModal()" style="padding:8px 16px;background:#edf2f7;border:none;border-radius:8px;color:#4a5568;font-size:0.82rem;cursor:pointer;font-family:inherit;">取消</button>
+      <button onclick="saveSpot()" style="padding:8px 16px;background:#1a6b8a;border:none;border-radius:8px;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">儲存景點</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none">
 
 <div class="photo-lightbox" id="photoLightbox" onclick="if(event.target===this)closeLightbox()">
@@ -1467,7 +1532,7 @@
 
 <script>
 // ── Data ──────────────────────────────────────────────
-const spots = [
+const DEFAULT_SPOTS = [
   // 那霸市區
   {
     id: 1, area: 'naha', color: '#e53e3e', areaName: '那霸市區',
@@ -1976,18 +2041,24 @@ const spots = [
   },
 ];
 
-// ── Area order ──────────────────────────────────────────
-const areaOrder = ['naha','minatogawa','kokusai','north','american','banta','senaga','south'];
-const areaLabels = {
-  naha: '🏙️ 那霸市區',
-  minatogawa: '🏘️ 港川外人住宅',
-  kokusai: '🛍️ 那霸國際通',
-  north: '🌊 沖繩北部',
-  american: '🇺🇸 美浜・美國村',
-  banta: '🌅 中部海岸',
-  senaga: '🏝️ 瀨長島',
-  south: '🌿 沖繩南部',
+// ── Area config ──────────────────────────────────────────
+const DEFAULT_AREAS = {
+  order: ['naha','minatogawa','kokusai','north','american','banta','senaga','south'],
+  config: {
+    naha: { label: '🏙️ 那霸市區', color: '#e53e3e' },
+    minatogawa: { label: '🏘️ 港川外人住宅', color: '#dd6b20' },
+    kokusai: { label: '🛍️ 那霸國際通', color: '#d69e2e' },
+    north: { label: '🌊 沖繩北部', color: '#38a169' },
+    american: { label: '🇺🇸 美浜・美國村', color: '#3182ce' },
+    banta: { label: '🌅 中部海岸', color: '#805ad5' },
+    senaga: { label: '🏝️ 瀨長島', color: '#0987a0' },
+    south: { label: '🌿 沖繩南部', color: '#702459' }
+  }
 };
+
+let activeSpots = [];
+let activeAreas = { order: [], config: {} };
+let activeHeader = { flag: '✈️', title: '我的旅程', subtitle: '點擊這裡編輯副標題' };
 
 // ── Map init ─────────────────────────────────────────────
 const map = L.map('map', { zoomControl: false }).setView([26.35, 127.78], 10);
@@ -2017,155 +2088,240 @@ function makeIcon(color, num) {
 // ── Build markers & popups ────────────────────────────────
 const markers = {};
 
-spots.forEach(s => {
-  const marker = L.marker([s.lat, s.lng], { icon: makeIcon(s.color, s.id) })
-    .addTo(map);
+function rebuildMarkers() {
+  Object.values(markers).forEach(function(m) { map.removeLayer(m); });
+  Object.keys(markers).forEach(function(k) { delete markers[k]; });
 
-  const igHtml = s.ig ? `<div style="margin-top:5px;font-size:0.7rem;color:#9f7aea;">📸 IG: @${s.ig}</div>` : '';
-  const tagsHtml = s.tags.map(t => `<span class="p-tag">${t}</span>`).join('');
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name)}&ll=${s.lat},${s.lng}`;
-  const mapsHtml = `<a href="${mapsUrl}" target="_blank" class="popup-maps">📍 在 Google Maps 中查看</a>`;
+  activeSpots.forEach(function(s) {
+    var marker = L.marker([s.lat, s.lng], { icon: makeIcon(s.color, s.id) })
+      .addTo(map);
 
-  const resvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
-  const resvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
-  const resvNoteHtml = s.resvNote ? `<div class="p-resv-note">💡 ${s.resvNote}</div>` : '';
+    var igHtml = s.ig ? '<div style="margin-top:5px;font-size:0.7rem;color:#9f7aea;">📸 IG: @' + esc(s.ig) + '</div>' : '';
+    var tagsHtml = s.tags.map(function(t) { return '<span class="p-tag">' + esc(t) + '</span>'; }).join('');
+    var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s.name) + '&ll=' + s.lat + ',' + s.lng;
+    var mapsHtml = '<a href="' + mapsUrl + '" target="_blank" class="popup-maps">📍 在 Google Maps 中查看</a>';
 
-  const transHtml = s.trans ? `<div class="p-trans-box"><strong>🚌 交通方式</strong>${s.trans}</div>` : '';
+    var resvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
+    var resvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
+    var resvNoteHtml = s.resvNote ? '<div class="p-resv-note">💡 ' + esc(s.resvNote) + '</div>' : '';
 
-  const infoHtml = `
-    <div class="p-info-row">
-      <span class="p-info-time">⏱ ${s.time}</span>
-      <span class="p-info-budget">💴 ${s.budget}</span>
-    </div>
-    <div class="p-hours-row">⏰ <strong>${s.hours}</strong>
-      <span class="resv-badge ${resvClass}">${resvIcon} ${s.resv}</span>
-    </div>
-    ${resvNoteHtml}
-    ${transHtml}`;
+    var transHtml = s.trans ? '<div class="p-trans-box"><strong>🚌 交通方式</strong>' + esc(s.trans) + '</div>' : '';
 
-  const popupContent = `
-    <div class="popup-header" style="background:${s.color}">
-      ${s.emoji} ${s.name}
-    </div>
-    <div class="popup-body">
-      <div class="p-type">📂 ${s.type}｜📌 ${s.areaName}</div>
-      ${infoHtml}
-      <div class="p-desc">${s.desc.replace(/\n/g,'<br>')}</div>
-      ${igHtml}
-      <div class="p-tags">${tagsHtml}</div>
-    </div>
-    ${mapsHtml}
-  `;
+    var infoHtml = '<div class="p-info-row">'
+      + '<span class="p-info-time">⏱ ' + esc(s.time || '') + '</span>'
+      + '<span class="p-info-budget">💴 ' + esc(s.budget || '') + '</span>'
+      + '</div>'
+      + '<div class="p-hours-row">⏰ <strong>' + esc(s.hours || '') + '</strong>'
+      + '<span class="resv-badge ' + resvClass + '">' + resvIcon + ' ' + esc(s.resv || '') + '</span>'
+      + '</div>'
+      + resvNoteHtml
+      + transHtml;
 
-  marker.bindPopup(popupContent, {
-    className: 'custom-popup',
-    maxWidth: 280,
-    minWidth: 240,
+    var popupContent = '<div class="popup-header" style="background:' + s.color + '">'
+      + esc(s.emoji || '') + ' ' + esc(s.name)
+      + '</div>'
+      + '<div class="popup-body">'
+      + '<div class="p-type">📂 ' + esc(s.type || '') + '｜📌 ' + esc(s.areaName || '') + '</div>'
+      + infoHtml
+      + '<div class="p-desc">' + esc(s.desc || '').replace(/\n/g,'<br>') + '</div>'
+      + igHtml
+      + '<div class="p-tags">' + tagsHtml + '</div>'
+      + '</div>'
+      + mapsHtml;
+
+    marker.bindPopup(popupContent, {
+      className: 'custom-popup',
+      maxWidth: 280,
+      minWidth: 240,
+    });
+
+    marker.on('click', function() {
+      document.querySelectorAll('.card').forEach(function(c) { c.classList.remove('active'); });
+      var card = document.querySelector('.card[data-id="' + s.id + '"]');
+      if (card) {
+        card.classList.add('active');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+
+    markers[s.id] = marker;
   });
-
-  marker.on('click', () => {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    const card = document.querySelector(`.card[data-id="${s.id}"]`);
-    if (card) {
-      card.classList.add('active');
-      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  });
-
-  markers[s.id] = marker;
-});
+}
 
 // ── Build cards ────────────────────────────────────────────
 function buildCards(filterArea) {
-  const list = document.getElementById('cardsList');
+  var list = document.getElementById('cardsList');
   list.innerHTML = '';
 
-  let lastArea = null;
+  if (activeSpots.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px 16px;color:#a0aec0;font-size:0.82rem;line-height:1.8;">此旅程尚無景點<br><br>點擊篩選列的 <strong>＋</strong> 新增區域<br>或點擊 <strong>＋ 新增景點</strong></div>';
+    return;
+  }
 
-  const filteredSpots = filterArea === 'all'
-    ? [...spots].sort((a,b) => areaOrder.indexOf(a.area) - areaOrder.indexOf(b.area))
-    : spots.filter(s => s.area === filterArea);
+  var addSpotBtn = document.createElement('button');
+  addSpotBtn.style.cssText = 'width:100%;padding:8px;border:2px dashed #38a169;border-radius:10px;background:#f0fff4;color:#38a169;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all 0.2s;';
+  addSpotBtn.textContent = '＋ 新增景點';
+  addSpotBtn.addEventListener('mouseover', function() { this.style.background = '#c6f6d5'; });
+  addSpotBtn.addEventListener('mouseout', function() { this.style.background = '#f0fff4'; });
+  addSpotBtn.addEventListener('click', function() { openAddSpotModal(); });
+  list.appendChild(addSpotBtn);
 
-  filteredSpots.forEach(s => {
+  var lastArea = null;
+
+  var filteredSpots = filterArea === 'all'
+    ? [].concat(activeSpots).sort(function(a,b) { return activeAreas.order.indexOf(a.area) - activeAreas.order.indexOf(b.area); })
+    : activeSpots.filter(function(s) { return s.area === filterArea; });
+
+  filteredSpots.forEach(function(s) {
     if (s.area !== lastArea) {
-      const label = document.createElement('div');
+      var label = document.createElement('div');
       label.className = 'area-label';
-      label.textContent = areaLabels[s.area];
+      label.textContent = (activeAreas.config[s.area] && activeAreas.config[s.area].label) || s.areaName || s.area;
       list.appendChild(label);
       lastArea = s.area;
     }
 
-    const card = document.createElement('div');
+    var card = document.createElement('div');
     card.className = 'card';
     card.dataset.id = s.id;
     card.dataset.area = s.area;
     card.style.borderLeftColor = s.color;
 
-    const tagsHtml = s.tags.slice(0,3).map(t => `<span class="meta-tag">${t}</span>`).join('');
+    var tagsHtml = (s.tags || []).slice(0,3).map(function(t) { return '<span class="meta-tag">' + esc(t) + '</span>'; }).join('');
 
-    const cResvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
-    const cResvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
-    card.innerHTML = `
-      <button class="card-add-btn" onclick="event.stopPropagation();showAddMenu(${s.id},this)" title="加入自訂行程">＋</button>
-      <div class="card-top">
-        <div class="card-num" style="background:${s.color}">${s.id}</div>
-        <div class="card-name">${s.emoji} ${s.name}</div>
-        <div class="card-type">${s.type}</div>
-      </div>
-      <div class="card-desc">${s.desc.split('\n')[0].substring(0, 85)}${s.desc.length > 85 ? '…' : ''}</div>
-      <div class="card-info-row">
-        <span class="info-time">⏱ ${s.time}</span>
-        <span class="info-budget">💴 ${s.budget}</span>
-      </div>
-      <div class="card-hours-row">
-        <span class="card-hours">⏰ ${s.hours}</span>
-        <span class="resv-badge ${cResvClass}">${cResvIcon} ${s.resv}</span>
-      </div>
-      ${s.trans ? `<div class="card-trans-row">🚌 <span>${s.trans.split('｜')[0]}</span></div>` : ''}
-      <div class="card-meta">${tagsHtml}</div>
-    `;
+    var cResvClass = s.resv === '不需預約' ? 'resv-no' : s.resv === '必須預約' ? 'resv-req' : 'resv-rec';
+    var cResvIcon  = s.resv === '不需預約' ? '✅' : s.resv === '必須預約' ? '🔴' : '🟡';
+    var descFirst = (s.desc || '').split('\n')[0];
+    var transFirst = (s.trans || '').split('｜')[0];
+    card.innerHTML = '<button class="card-add-btn" onclick="event.stopPropagation();showAddMenu(' + s.id + ',this)" title="加入自訂行程">＋</button>'
+      + '<div class="card-actions-hover" style="position:absolute;top:8px;right:36px;display:flex;gap:2px;opacity:0;transition:opacity 0.15s;">'
+      + '<button onclick="event.stopPropagation();openAddSpotModal(' + s.id + ')" title="編輯景點" style="background:#edf2f7;border:none;border-radius:4px;padding:3px 5px;cursor:pointer;font-size:0.65rem;color:#4a5568;">✏️</button>'
+      + '<button onclick="event.stopPropagation();deleteSpot(' + s.id + ')" title="刪除景點" style="background:#edf2f7;border:none;border-radius:4px;padding:3px 5px;cursor:pointer;font-size:0.65rem;color:#4a5568;">🗑</button>'
+      + '</div>'
+      + '<div class="card-top">'
+      + '<div class="card-num" style="background:' + s.color + '">' + s.id + '</div>'
+      + '<div class="card-name">' + esc(s.emoji || '') + ' ' + esc(s.name) + '</div>'
+      + '<div class="card-type">' + esc(s.type || '') + '</div>'
+      + '</div>'
+      + '<div class="card-desc">' + esc(descFirst.substring(0, 85)) + (descFirst.length > 85 ? '...' : '') + '</div>'
+      + (s.time ? '<div class="card-info-row"><span class="info-time">⏱ ' + esc(s.time) + '</span><span class="info-budget">💴 ' + esc(s.budget || '') + '</span></div>' : '')
+      + (s.hours ? '<div class="card-hours-row"><span class="card-hours">⏰ ' + esc(s.hours) + '</span><span class="resv-badge ' + cResvClass + '">' + cResvIcon + ' ' + esc(s.resv || '') + '</span></div>' : '')
+      + (s.trans ? '<div class="card-trans-row">🚌 <span>' + esc(transFirst) + '</span></div>' : '')
+      + '<div class="card-meta">' + tagsHtml + '</div>';
 
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    card.addEventListener('mouseenter', function() {
+      var ah = card.querySelector('.card-actions-hover');
+      if (ah) ah.style.opacity = '1';
+    });
+    card.addEventListener('mouseleave', function() {
+      var ah = card.querySelector('.card-actions-hover');
+      if (ah) ah.style.opacity = '0';
+    });
+
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.card').forEach(function(c) { c.classList.remove('active'); });
       card.classList.add('active');
       map.setView([s.lat, s.lng], 15, { animate: true });
-      markers[s.id].openPopup();
+      if (markers[s.id]) markers[s.id].openPopup();
     });
 
     list.appendChild(card);
   });
 }
 
-buildCards('all');
+// ── Filter buttons (dynamic) ─────────────────────────────
+function handleFilterClick(area) {
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.querySelector('.filter-btn[data-area="' + area + '"]');
+  if (btn) btn.classList.add('active');
+  buildCards(area);
 
-// ── Filter buttons ────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const area = btn.dataset.area;
-    buildCards(area);
-
-    if (area !== 'all') {
-      const areaSpots = spots.filter(s => s.area === area);
-      if (areaSpots.length > 0) {
-        const bounds = L.latLngBounds(areaSpots.map(s => [s.lat, s.lng]));
-        map.fitBounds(bounds, { padding: [60, 60] });
-      }
+  if (area !== 'all') {
+    var areaSpots = activeSpots.filter(function(s) { return s.area === area; });
+    if (areaSpots.length > 0) {
+      var bounds = L.latLngBounds(areaSpots.map(function(s) { return [s.lat, s.lng]; }));
+      map.fitBounds(bounds, { padding: [60, 60] });
+    }
+  } else {
+    if (activeSpots.length > 0) {
+      var allBounds = L.latLngBounds(activeSpots.map(function(s) { return [s.lat, s.lng]; }));
+      map.fitBounds(allBounds, { padding: [60, 60] });
     } else {
       map.setView([26.35, 127.78], 10, { animate: true });
     }
+  }
+}
+
+function rebuildFilters() {
+  var container = document.getElementById('filtersContainer');
+  container.innerHTML = '';
+  // "All" button
+  var allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn active';
+  allBtn.dataset.area = 'all';
+  allBtn.style.background = '#4a5568';
+  allBtn.textContent = '全部';
+  allBtn.addEventListener('click', function() { handleFilterClick('all'); });
+  container.appendChild(allBtn);
+
+  activeAreas.order.forEach(function(key) {
+    var cfg = activeAreas.config[key];
+    if (!cfg) return;
+    var btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.area = key;
+    btn.style.background = cfg.color;
+    btn.textContent = cfg.label;
+    btn.addEventListener('click', function() { handleFilterClick(key); });
+    // Edit icon on hover
+    btn.style.position = 'relative';
+    btn.addEventListener('mouseenter', function() {
+      if (!btn.querySelector('.filter-edit-icon')) {
+        var icon = document.createElement('span');
+        icon.className = 'filter-edit-icon';
+        icon.textContent = '✎';
+        icon.style.cssText = 'position:absolute;top:-6px;right:-6px;background:#fff;color:#4a5568;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);cursor:pointer;z-index:5;';
+        icon.addEventListener('click', function(e) { e.stopPropagation(); openAddAreaModal(key); });
+        btn.appendChild(icon);
+      }
+    });
+    btn.addEventListener('mouseleave', function() {
+      var icon = btn.querySelector('.filter-edit-icon');
+      if (icon) icon.remove();
+    });
+    container.appendChild(btn);
   });
-});
+
+  // Add area button
+  var addBtn = document.createElement('button');
+  addBtn.className = 'filter-btn';
+  addBtn.style.cssText = 'background:#cbd5e0;opacity:0.7;font-size:0.82rem;';
+  addBtn.textContent = '＋';
+  addBtn.title = '新增區域分類';
+  addBtn.addEventListener('click', function() { openAddAreaModal(); });
+  container.appendChild(addBtn);
+}
+
+function rebuildLegend() {
+  var legend = document.querySelector('.map-legend');
+  if (!legend) return;
+  legend.innerHTML = '<h4>📍 區域圖例</h4>';
+  activeAreas.order.forEach(function(key) {
+    var cfg = activeAreas.config[key];
+    if (!cfg) return;
+    var item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = '<div class="legend-dot" style="background:' + cfg.color + '"></div>' + esc(cfg.label);
+    legend.appendChild(item);
+  });
+}
 
 // ── Tab switch ────────────────────────────────────────────
 function switchTab(tab) {
   var wasCustom = document.getElementById('tabCustom').classList.contains('active');
   document.getElementById('tabSpots').classList.toggle('active', tab === 'spots');
-  document.getElementById('tabItin').classList.toggle('active', tab === 'itin');
   document.getElementById('tabCustom').classList.toggle('active', tab === 'custom');
   document.getElementById('panelSpots').style.display = tab === 'spots' ? 'flex' : 'none';
-  document.getElementById('panelItin').style.display  = tab === 'itin' ? 'flex' : 'none';
   document.getElementById('panelCustom').style.display = tab === 'custom' ? 'flex' : 'none';
   if (tab === 'custom') {
     setDefaultMarkersVisible(false);
@@ -2179,184 +2335,6 @@ function switchTab(tab) {
   updateStatsBar();
 }
 
-// ── Itinerary data ────────────────────────────────────────
-const itinerary = [
-  {
-    day: 1, color: '#0987a0',
-    title: 'Day 1｜無車｜機場 → 瀨長島 → 那霸市區',
-    theme: '抵台輕鬆遊・不需租車',
-    transport: '🚕 計程車 + 🚝 Yui Rail',
-    tip: '建議先去瀨長島再到市區：瀨長島在機場旁，順路不繞路，傍晚最美！',
-    items: [
-      { time: '抵達', icon: '✈️', name: '那霸機場落地', note: '取行李、前往市區飯店 check-in', warn: '' },
-      { time: '下午', icon: '🏝️', name: '瀨長島 ウミカジテラス', spotId: 32, note: '計程車從機場 15 分，地中海風格、海景、看飛機', warn: '' },
-      { time: '',     icon: '🍧', name: 'Ice Terrace', spotId: 33, note: '島上特色冰品，邊吃邊看海', warn: '' },
-      { time: '',     icon: '🍔', name: 'チムフガス 氾濫漢堡', spotId: 35, note: '份量誇張的爆漿漢堡', warn: '' },
-      { time: '',     icon: '🪨', name: '子宝岩', spotId: 37, note: '散步 5 分鐘，免費', warn: '' },
-      { time: '傍晚', icon: '🚕', name: '計程車回那霸市區', note: '約 15 分鐘', warn: '' },
-      { time: '傍晚', icon: '🛍️', name: '那覇 国際通り', spotId: 14, note: '購物、逛伴手禮', warn: '' },
-      { time: '',     icon: '🍦', name: 'Fontana Gelato', spotId: 16, note: '邊走邊吃義式冰淇淋', warn: '' },
-      { time: '',     icon: '🪆', name: 'あっぱりしゃん', spotId: 17, note: '琉球雜貨選物', warn: '' },
-      { time: '',     icon: '👕', name: 'Splash okinawa', spotId: 15, note: '沖繩限定服飾', warn: '' },
-      { time: '晚餐', icon: '🍜', name: 'しむじょう 沖繩麵', spotId: 18, note: '正宗老字號，15:00 就關要早去', warn: '注意早關門！' },
-      { time: '夜晚', icon: '🏪', name: '牧志公設市場', spotId: 1, note: '感受市場氣氛，逛逛明天想買的', warn: '' },
-    ],
-    summary: ['景點 10 個', '以計程車＋步行為主', '瀨長島→那霸最順路']
-  },
-  {
-    day: 2, color: '#38a169',
-    title: 'Day 2｜租車｜沖繩北部全天',
-    theme: '北部大探索・全程自駕',
-    transport: '🚗 租車（全天）・建議加滿油出發',
-    tip: '北部景點最遠！全程約 200km，早出發才夠玩。BANTA CAFE 先喝咖啡再繼續衝。',
-    items: [
-      { time: '07:30', icon: '🚗', name: '那霸出發', note: '早出發是北部一天的關鍵', warn: '' },
-      { time: '08:00', icon: '🍳', name: 'C&C BREAKFAST', spotId: 7, note: '那霸市區早午餐（08:00 開），週三公休注意', warn: '' },
-      { time: '09:30', icon: '🚗', name: '北上出發', note: '沖繩自動車道', warn: '' },
-      { time: '10:20', icon: '🌅', name: 'BANTA CAFE', spotId: 31, note: '讀谷村懸崖咖啡，俯瞰東海', warn: '' },
-      { time: '11:30', icon: '🚗', name: '繼續北上', note: '往美ら海水族館約 1 小時', warn: '' },
-      { time: '13:00', icon: '🐋', name: '沖縄美ら海水族館', spotId: 22, note: '建議停留 2〜2.5 小時，鯨鯊必看！', warn: '' },
-      { time: '15:30', icon: '🌳', name: '備瀬のフクギ並木', spotId: 23, note: '水族館開車 10 分', warn: '' },
-      { time: '',     icon: '🚲', name: 'Namiki Bike Rentals 租腳踏車', spotId: 24, note: '現場租借，騎進林蔭大道', warn: '' },
-      { time: '16:30', icon: '🚗', name: '回程南下', note: '', warn: '' },
-      { time: '17:30', icon: '🌊', name: 'ブセナ海中公園', spotId: 19, note: '回程順路停靠（注意 18:00 關）', warn: '最晚 17:30 前到！' },
-      { time: '',     icon: '🚢', name: '玻璃底船', spotId: 20, note: '約 30 分鐘一趟', warn: '' },
-      { time: '',     icon: '🗼', name: '海中展望塔', spotId: 21, note: '海底 360° 觀賞', warn: '' },
-      { time: '19:30', icon: '🏠', name: '返回那霸', note: '約 1.5 小時車程', warn: '' },
-      { time: '晚餐', icon: '🍩', name: 'サーターアンダギー歩', spotId: 5, note: '回市區買甜甜圈當宵夜', warn: '' },
-    ],
-    summary: ['景點 8 個', '全程約 200km', '建議 07:30 出發']
-  },
-  {
-    day: 3, color: '#702459',
-    title: 'Day 3｜租車｜南部 → 港川 → 美國村 → 瀨長島',
-    theme: '文青購物＋夕陽收尾',
-    transport: '🚗 租車（全天）・傍晚還車前最後去瀨長島',
-    tip: 'Gangala 必須提前預約！建議現在就去官網訂 09:00 場次，否則這天行程需調整。',
-    items: [
-      { time: '07:00', icon: '🍙', name: 'ポーたま 牧志市場店', spotId: 6, note: '沖繩靈魂早餐，07:00 開賣', warn: '' },
-      { time: '08:30', icon: '🚗', name: '出發南部', note: '那霸市區出發約 30 分', warn: '' },
-      { time: '09:00', icon: '☕', name: 'CAVE CAFE 洞穴咖啡', spotId: 39, note: 'Gangala 導覽起點，先喝杯咖啡', warn: '🔴 必須預約！' },
-      { time: '',     icon: '🌿', name: 'Gangala ガンガラーの谷', spotId: 38, note: '神秘谷地導覽約 1.5 小時', warn: '🔴 必須預約，旺季提前 1〜2 月！' },
-      { time: '11:00', icon: '🚗', name: '出發港川', note: '約 20 分鐘', warn: '' },
-      { time: '11:20', icon: '🏘️', name: '港川ステイツサイドタウン', spotId: 9, note: '舊美軍宿舍改建文青聚落', warn: '' },
-      { time: '',     icon: '🌸', name: 'THE FLAVOR DESIGN', spotId: 10, note: '沖繩香水伴手禮', warn: '' },
-      { time: '',     icon: '👗', name: 'American Wave 古著', spotId: 11, note: '美式復古服飾', warn: '' },
-      { time: '',     icon: '🍮', name: 'ほうき星 甜點咖啡', spotId: 12, note: '午餐後下午茶，週三公休', warn: '' },
-      { time: '13:30', icon: '🚗', name: '出發美國村', note: '約 20 分鐘', warn: '' },
-      { time: '14:00', icon: '🇺🇸', name: '美浜アメリカンビレッジ', spotId: 25, note: '沖繩中部最大購物娛樂區', warn: '' },
-      { time: '',     icon: '🍟', name: 'A&W', spotId: 26, note: '沖繩限定 Root Beer 必喝！', warn: '' },
-      { time: '',     icon: '🩴', name: 'OKICHU 沖忠 人字拖', spotId: 27, note: '沖繩必買伴手禮', warn: '' },
-      { time: '',     icon: '🌮', name: 'タコライス きじむなぁ', spotId: 28, note: '沖繩創意塔可飯', warn: '' },
-      { time: '',     icon: '🎪', name: 'American Depot', spotId: 29, note: '美式古著雜貨', warn: '' },
-      { time: '17:00', icon: '🚗', name: '出發瀨長島', note: '約 15 分鐘', warn: '' },
-      { time: '17:15', icon: '🏝️', name: '瀨長島 ウミカジテラス', spotId: 32, note: '夕陽時刻再訪，最美時段', warn: '' },
-      { time: '',     icon: '🥞', name: '幸せのパンケーキ', spotId: 34, note: '海景舒芙蕾鬆餅，建議提前預約', warn: '🟡 建議提前 1〜2 天預約' },
-      { time: '18:30', icon: '🍝', name: 'POSILLIPO 義式晚餐', spotId: 36, note: '浪漫海景收尾', warn: '🟡 提前 3〜5 天預約海景座！' },
-      { time: '19:30', icon: '🏁', name: '還車 / 回飯店', note: '完美收尾', warn: '' },
-    ],
-    summary: ['景點 14 個', 'Gangala 必須提前預約', '傍晚瀨長島看夕陽收尾']
-  },
-  {
-    day: 4, color: '#4a5568',
-    title: 'Day 4｜無車｜那霸市區 → 機場出發',
-    theme: '出發日・把握最後時光',
-    transport: '🚝 Yui Rail + 🚶 步行・行李寄放飯店再出發',
-    tip: '行李可請飯店代為保管到下午，輕鬆逛完牧志市場周邊再搭 Yui Rail 到機場，那霸機場站直達！',
-    items: [
-      { time: '07:30', icon: '☕', name: 'コーヒースタンド小嶺', spotId: 4,  note: '牧志市場旁，手沖咖啡開啟最後一天', warn: '' },
-      { time: '08:00', icon: '🫘', name: 'じーまーみ豆腐専門店 花商', spotId: 3,  note: '花生豆腐，沖繩特色早點', warn: '' },
-      { time: '08:30', icon: '🏪', name: '那霸市第一牧志公設市場', spotId: 1,  note: '最後一次採購伴手禮食材', warn: '' },
-      { time: '09:30', icon: '🍩', name: 'サーターアンダギー歩', spotId: 5,  note: '買一袋帶上飛機當點心！', warn: '' },
-      { time: '10:00', icon: '🍔', name: 'Jef ジェフ サンライズ那覇店', spotId: 8,  note: '苦瓜漢堡！沖繩限定，離開前最後機會', warn: '' },
-      { time: '10:45', icon: '🛍️', name: '那覇 国際通り 最後採購', spotId: 14, note: '補買沒買到的伴手禮', warn: '' },
-      { time: '11:30', icon: '🚝', name: 'Yui Rail 前往機場', note: '縣廳前站或旭橋站搭車，約 12 分鐘到那霸機場', warn: '' },
-      { time: '12:00', icon: '✈️', name: '那霸機場 Check-in', note: '建議起飛前 2 小時抵達辦理登機', warn: '' },
-    ],
-    summary: ['景點 5 個', '以步行＋Yui Rail 為主', '行李可寄放飯店到出發前']
-  }
-];
-
-// ── Render Itinerary ──────────────────────────────────────
-function buildItinerary() {
-  const container = document.getElementById('itinList');
-  container.innerHTML = '';
-
-  itinerary.forEach((day, di) => {
-    const dayDiv = document.createElement('div');
-    dayDiv.className = 'itin-day';
-
-    // Header
-    const hdr = document.createElement('div');
-    hdr.className = 'itin-day-header';
-    hdr.style.background = `linear-gradient(135deg, ${day.color}, ${day.color}cc)`;
-    hdr.innerHTML = `
-      <div>
-        <span class="day-num">Day ${day.day}</span>${day.title.replace(/^Day \d｜/, '')}
-        <span class="day-theme">${day.theme}</span>
-        <span class="day-transport">${day.transport}</span>
-      </div>`;
-    dayDiv.appendChild(hdr);
-
-    // Tip
-    if (day.tip) {
-      const tip = document.createElement('div');
-      tip.className = 'itin-tip';
-      tip.innerHTML = `💡 ${day.tip}`;
-      dayDiv.appendChild(tip);
-    }
-
-    // Items
-    const itemsDiv = document.createElement('div');
-    itemsDiv.className = 'itin-items';
-
-    day.items.forEach((item, ii) => {
-      const hasSpot = !!item.spotId;
-      const spot = hasSpot ? spots.find(s => s.id === item.spotId) : null;
-      const isLast = ii === day.items.length - 1;
-
-      const row = document.createElement('div');
-      row.className = 'itin-item' + (hasSpot ? '' : ' no-spot');
-
-      const numBadge = spot
-        ? `<span class="itin-num" style="background:${spot.color}">${spot.id}</span>`
-        : '';
-
-      row.innerHTML = `
-        <div class="itin-time">${item.time}</div>
-        <div class="itin-dot-col">
-          <div class="itin-dot" style="color:${day.color}"></div>
-          ${!isLast ? '<div class="itin-line"></div>' : ''}
-        </div>
-        <div class="itin-content">
-          <div class="itin-name">${item.icon} ${item.name}${numBadge}</div>
-          ${item.note ? `<div class="itin-note">${item.note}</div>` : ''}
-          ${item.warn ? `<div class="itin-warn">${item.warn}</div>` : ''}
-        </div>`;
-
-      if (hasSpot && spot) {
-        row.addEventListener('click', () => {
-          map.setView([spot.lat, spot.lng], 15, { animate: true });
-          markers[spot.id].openPopup();
-        });
-      }
-
-      itemsDiv.appendChild(row);
-    });
-
-    dayDiv.appendChild(itemsDiv);
-
-    // Summary
-    const sumDiv = document.createElement('div');
-    sumDiv.className = 'itin-summary';
-    sumDiv.innerHTML = day.summary.map(s => `<span>📌 ${s}</span>`).join('');
-    dayDiv.appendChild(sumDiv);
-
-    container.appendChild(dayDiv);
-  });
-}
-
-buildItinerary();
 
 // ── Custom Itinerary ─────────────────────────────────────
 let customItin = JSON.parse(localStorage.getItem('oki_custom') || '[]');
@@ -2369,13 +2347,7 @@ function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function saveCustom() {
-  try {
-    localStorage.setItem('oki_custom', JSON.stringify(customItin));
-  } catch (e) {
-    alert('儲存空間不足！請刪除一些照片後再試。');
-  }
-}
+
 
 function addCustomDay() {
   const dayNum = customItin.length + 1;
@@ -2397,10 +2369,10 @@ function updateDayTitle(id, val) {
 }
 
 function addSpotToCustomDay(dayId, spotId) {
-  const d = customItin.find(d => d.id === dayId);
-  const s = spots.find(s => s.id === spotId);
+  var d = customItin.find(function(dd) { return dd.id === dayId; });
+  var s = activeSpots.find(function(sp) { return sp.id === spotId; });
   if (!d || !s) return;
-  d.items.push({ id: Date.now(), spotId: s.id, name: s.emoji + ' ' + s.name, time: '', note: '' });
+  d.items.push({ id: Date.now(), spotId: s.id, name: (s.emoji || '') + ' ' + s.name, time: '', note: '', lat: s.lat, lng: s.lng });
   saveCustom();
   renderCustom();
   switchTab('custom');
@@ -2560,10 +2532,10 @@ document.addEventListener('keydown', function(e) {
 })();
 
 function flyToSpot(spotId) {
-  const s = spots.find(s => s.id === spotId);
+  var s = activeSpots.find(function(sp) { return sp.id === spotId; });
   if (!s) return;
   map.setView([s.lat, s.lng], 15, { animate: true });
-  markers[spotId].openPopup();
+  if (markers[spotId]) markers[spotId].openPopup();
 }
 
 // ── Custom Map ──
@@ -2610,7 +2582,7 @@ function updateCustomMap() {
     day.items.forEach(function(item) {
       var lat, lng;
       if (item.spotId) {
-        var spot = spots.find(function(s) { return s.id === item.spotId; });
+        var spot = activeSpots.find(function(s) { return s.id === item.spotId; });
         if (!spot) return;
         lat = spot.lat; lng = spot.lng;
       } else if (item.lat && item.lng) {
@@ -2654,9 +2626,12 @@ function zoomToCustomDay(dayIndex) {
   if (!day) return;
   var lls = [];
   day.items.forEach(function(item) {
-    if (!item.spotId) return;
-    var s = spots.find(function(sp) { return sp.id === item.spotId; });
-    if (s) lls.push([s.lat, s.lng]);
+    if (item.lat && item.lng) {
+      lls.push([item.lat, item.lng]);
+    } else if (item.spotId) {
+      var s = activeSpots.find(function(sp) { return sp.id === item.spotId; });
+      if (s) lls.push([s.lat, s.lng]);
+    }
   });
   if (lls.length === 1) {
     map.setView(lls[0], 15, { animate: true });
@@ -2681,27 +2656,27 @@ function closeSpotPicker() {
 }
 
 function buildSpotPickerList(query) {
-  const list = document.getElementById('spotPickerList');
+  var list = document.getElementById('spotPickerList');
   list.innerHTML = '';
-  const q = query.toLowerCase();
-  let lastArea = null;
-  const sorted = [...spots].sort((a,b) => areaOrder.indexOf(a.area) - areaOrder.indexOf(b.area));
+  var q = (query || '').toLowerCase();
+  var lastArea = null;
+  var sorted = [].concat(activeSpots).sort(function(a,b) { return activeAreas.order.indexOf(a.area) - activeAreas.order.indexOf(b.area); });
 
-  sorted.forEach(s => {
-    if (q && !s.name.toLowerCase().includes(q) && !s.type.toLowerCase().includes(q) && !s.areaName.includes(q) && !s.tags.some(t => t.includes(q))) return;
+  sorted.forEach(function(s) {
+    if (q && !s.name.toLowerCase().includes(q) && !(s.type||'').toLowerCase().includes(q) && !(s.areaName||'').includes(q) && !(s.tags||[]).some(function(t) { return t.includes(q); })) return;
     if (s.area !== lastArea) {
-      const label = document.createElement('div');
+      var label = document.createElement('div');
       label.className = 'spot-picker-area';
-      label.textContent = areaLabels[s.area];
+      label.textContent = (activeAreas.config[s.area] && activeAreas.config[s.area].label) || s.areaName || s.area;
       list.appendChild(label);
       lastArea = s.area;
     }
-    const item = document.createElement('div');
+    var item = document.createElement('div');
     item.className = 'spot-picker-item';
     item.innerHTML = '<div class="sp-num" style="background:' + s.color + '">' + s.id + '</div>'
-      + '<span class="sp-name">' + s.emoji + ' ' + esc(s.name) + '</span>'
-      + '<span class="sp-type">' + esc(s.type) + '</span>';
-    item.addEventListener('click', () => {
+      + '<span class="sp-name">' + esc(s.emoji || '') + ' ' + esc(s.name) + '</span>'
+      + '<span class="sp-type">' + esc(s.type || '') + '</span>';
+    item.addEventListener('click', function() {
       addSpotToCustomDay(pickerTargetDayId, s.id);
       closeSpotPicker();
     });
@@ -2748,24 +2723,7 @@ function exitPinDropMode() {
   if (pinDropTempMarker) { map.removeLayer(pinDropTempMarker); pinDropTempMarker = null; }
 }
 
-map.on('click', function(e) {
-  if (!pinDropMode) return;
-  if (pinDropTempMarker) map.removeLayer(pinDropTempMarker);
-
-  var lat = Math.round(e.latlng.lat * 100000) / 100000;
-  var lng = Math.round(e.latlng.lng * 100000) / 100000;
-
-  pinDropTempMarker = L.marker([lat, lng]).addTo(map);
-  var html = '<div style="padding:10px;min-width:210px;">'
-    + '<div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">📌 新增地標</div>'
-    + '<input id="pinDropName" type="text" value="新地標" style="width:100%;padding:7px 10px;border:1px solid #cbd5e0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;outline:none;" />'
-    + '<div style="display:flex;gap:6px;margin-top:10px;">'
-    + '<button onclick="confirmPinDrop(' + lat + ',' + lng + ')" style="flex:1;padding:8px;background:#1a6b8a;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">確認加入</button>'
-    + '<button onclick="exitPinDropMode()" style="flex:1;padding:8px;background:#edf2f7;color:#4a5568;border:none;border-radius:8px;font-size:0.8rem;cursor:pointer;font-family:inherit;">取消</button>'
-    + '</div></div>';
-  pinDropTempMarker.bindPopup(html, { closeButton: false, closeOnClick: false, maxWidth: 260 }).openPopup();
-  setTimeout(function() { var inp = document.getElementById('pinDropName'); if (inp) inp.select(); }, 100);
-});
+// Map click handler moved to combined handler below
 
 function confirmPinDrop(lat, lng) {
   var inp = document.getElementById('pinDropName');
@@ -3031,10 +2989,11 @@ function renderCustom() {
 
   updateCustomMap();
   updateStatsBar();
+  if (typeof renderTrips === 'function') renderTrips();
 }
 
 function getSpotCategory(spotId) {
-  var s = spots.find(function(sp) { return sp.id === spotId; });
+  var s = activeSpots.find(function(sp) { return sp.id === spotId; });
   if (!s) return null;
   var t = s.type;
   if (/咖啡|カフェ|CAFE/i.test(t)) return 'cafe';
@@ -3048,11 +3007,22 @@ function updateStatsBar() {
   var isCustom = document.getElementById('tabCustom').classList.contains('active');
 
   if (!isCustom) {
-    bar.innerHTML = '<div class="stat">🏙️ <strong>4</strong> 區域</div>'
-      + '<div class="stat">🍜 <strong>15</strong> 美食</div>'
-      + '<div class="stat">🛍️ <strong>12</strong> 購物</div>'
-      + '<div class="stat">🌊 <strong>8</strong> 景點體驗</div>'
-      + '<div class="stat">☕ <strong>4</strong> 咖啡廳</div>';
+    var areaCount = activeAreas.order.length;
+    var sFood = 0, sShop = 0, sAttr = 0, sCafe = 0;
+    activeSpots.forEach(function(sp) {
+      var cat = getSpotCategory(sp.id);
+      if (cat === 'food') sFood++;
+      else if (cat === 'shop') sShop++;
+      else if (cat === 'cafe') sCafe++;
+      else sAttr++;
+    });
+    var parts2 = [];
+    parts2.push('<div class="stat">🏙️ <strong>' + areaCount + '</strong> 區域</div>');
+    if (sFood) parts2.push('<div class="stat">🍜 <strong>' + sFood + '</strong> 美食</div>');
+    if (sShop) parts2.push('<div class="stat">🛍️ <strong>' + sShop + '</strong> 購物</div>');
+    if (sAttr) parts2.push('<div class="stat">🌊 <strong>' + sAttr + '</strong> 景點體驗</div>');
+    if (sCafe) parts2.push('<div class="stat">☕ <strong>' + sCafe + '</strong> 咖啡廳</div>');
+    bar.innerHTML = parts2.join('');
     return;
   }
 
@@ -3081,34 +3051,366 @@ function updateStatsBar() {
   bar.innerHTML = parts.join('');
 }
 
-renderCustom();
+// ── Trip Collection ──
+let tripCollection = JSON.parse(localStorage.getItem('oki_trips') || '[]');
+let activeTripId = localStorage.getItem('oki_active_trip') || null;
 
-// ── Editable Header ──
-const hdrTitle = document.getElementById('headerTitle');
-const hdrSub = document.getElementById('headerSubtitle');
-const savedTitle = localStorage.getItem('oki_header_title');
-const savedSub = localStorage.getItem('oki_header_subtitle');
-if (savedTitle) hdrTitle.textContent = savedTitle;
-if (savedSub) hdrSub.textContent = savedSub;
-hdrTitle.addEventListener('blur', function(){ localStorage.setItem('oki_header_title', this.textContent); });
-hdrSub.addEventListener('blur', function(){ localStorage.setItem('oki_header_subtitle', this.textContent); });
-hdrTitle.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
-hdrSub.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
-const hdrFlag = document.getElementById('headerFlag');
-const savedFlag = localStorage.getItem('oki_header_flag');
-if (savedFlag) hdrFlag.textContent = savedFlag;
-hdrFlag.addEventListener('blur', function(){ localStorage.setItem('oki_header_flag', this.textContent); });
+var builtinItinerary = buildDefaultTripData();
+
+function buildDefaultTripData() {
+  var defSpots = JSON.parse(JSON.stringify(DEFAULT_SPOTS));
+  var defAreas = JSON.parse(JSON.stringify(DEFAULT_AREAS));
+  var dayDefs = [
+    { title: 'Day 1｜機場→瀨長島→那霸', items: [
+      { spotId: null, name: '✈️ 那霸機場落地', time: '抵達', note: '取行李、前往市區飯店 check-in' },
+      { spotId: 32, name: '🏝️ 瀨長島 ウミカジテラス', time: '下午', note: '計程車從機場15分，地中海風格' },
+      { spotId: 33, name: '🍧 Ice Terrace', time: '', note: '島上特色冰品' },
+      { spotId: 35, name: '🍔 チムフガス 氾濫漢堡', time: '', note: '份量誇張的爆漿漢堡' },
+      { spotId: 37, name: '🪨 子宝岩', time: '', note: '散步5分鐘，免費' },
+      { spotId: null, name: '🚕 計程車回那霸市區', time: '傍晚', note: '約15分鐘' },
+      { spotId: 14, name: '🛍️ 那覇 国際通り', time: '傍晚', note: '購物、逛伴手禮' },
+      { spotId: 16, name: '🍦 Fontana Gelato', time: '', note: '邊走邊吃義式冰淇淋' },
+      { spotId: 17, name: '🪆 あっぱりしゃん', time: '', note: '琉球雜貨選物' },
+      { spotId: 15, name: '👕 Splash okinawa', time: '', note: '沖繩限定服飾' },
+      { spotId: 18, name: '🍜 しむじょう 沖繩麵', time: '晚餐', note: '正宗老字號，15:00就關要早去' },
+      { spotId: 1, name: '🏪 牧志公設市場', time: '夜晚', note: '感受市場氣氛' }
+    ]},
+    { title: 'Day 2｜沖繩北部全天', items: [
+      { spotId: null, name: '🚗 那霸出發', time: '07:30', note: '早出發是北部一天的關鍵' },
+      { spotId: 7, name: '🍳 C&C BREAKFAST', time: '08:00', note: '那霸市區早午餐，週三公休' },
+      { spotId: null, name: '🚗 北上出發', time: '09:30', note: '沖繩自動車道' },
+      { spotId: 31, name: '🌅 BANTA CAFE', time: '10:20', note: '讀谷村懸崖咖啡，俯瞰東海' },
+      { spotId: null, name: '🚗 繼續北上', time: '11:30', note: '往美ら海水族館約1小時' },
+      { spotId: 22, name: '🐋 沖縄美ら海水族館', time: '13:00', note: '建議停留2〜2.5小時' },
+      { spotId: 23, name: '🌳 備瀬のフクギ並木', time: '15:30', note: '水族館開車10分' },
+      { spotId: 24, name: '🚲 Namiki Bike Rentals', time: '', note: '租腳踏車騎進林蔭大道' },
+      { spotId: null, name: '🚗 回程南下', time: '16:30', note: '' },
+      { spotId: 19, name: '🌊 ブセナ海中公園', time: '17:30', note: '回程順路停靠（18:00關）' },
+      { spotId: 20, name: '🚢 玻璃底船', time: '', note: '約30分鐘一趟' },
+      { spotId: 21, name: '🗼 海中展望塔', time: '', note: '海底360°觀賞' },
+      { spotId: null, name: '🏠 返回那霸', time: '19:30', note: '約1.5小時車程' },
+      { spotId: 5, name: '🍩 サーターアンダギー歩', time: '晚餐', note: '回市區買甜甜圈當宵夜' }
+    ]},
+    { title: 'Day 3｜南部→港川→美國村→瀨長島', items: [
+      { spotId: 6, name: '🍙 ポーたま 牧志市場店', time: '07:00', note: '沖繩靈魂早餐' },
+      { spotId: null, name: '🚗 出發南部', time: '08:30', note: '那霸出發約30分' },
+      { spotId: 39, name: '☕ CAVE CAFE 洞穴咖啡', time: '09:00', note: 'Gangala導覽起點，必須預約！' },
+      { spotId: 38, name: '🌿 Gangala ガンガラーの谷', time: '', note: '神秘谷地導覽約1.5小時，必須預約！' },
+      { spotId: null, name: '🚗 出發港川', time: '11:00', note: '約20分鐘' },
+      { spotId: 9, name: '🏘️ 港川ステイツサイドタウン', time: '11:20', note: '舊美軍宿舍改建文青聚落' },
+      { spotId: 10, name: '🌸 THE FLAVOR DESIGN', time: '', note: '沖繩香水伴手禮' },
+      { spotId: 11, name: '👗 American Wave 古著', time: '', note: '美式復古服飾' },
+      { spotId: 12, name: '🍮 ほうき星 甜點咖啡', time: '', note: '午餐後下午茶，週三公休' },
+      { spotId: null, name: '🚗 出發美國村', time: '13:30', note: '約20分鐘' },
+      { spotId: 25, name: '🇺🇸 美浜アメリカンビレッジ', time: '14:00', note: '沖繩中部最大購物娛樂區' },
+      { spotId: 26, name: '🍟 A&W', time: '', note: '沖繩限定 Root Beer 必喝！' },
+      { spotId: 27, name: '🩴 OKICHU 沖忠 人字拖', time: '', note: '沖繩必買伴手禮' },
+      { spotId: 28, name: '🌮 タコライス きじむなぁ', time: '', note: '沖繩創意塔可飯' },
+      { spotId: 29, name: '🎪 American Depot', time: '', note: '美式古著雜貨' },
+      { spotId: null, name: '🚗 出發瀨長島', time: '17:00', note: '約15分鐘' },
+      { spotId: 32, name: '🏝️ 瀨長島 ウミカジテラス', time: '17:15', note: '夕陽時刻再訪' },
+      { spotId: 34, name: '🥞 幸せのパンケーキ', time: '', note: '海景舒芙蕾鬆餅，建議提前預約' },
+      { spotId: 36, name: '🍝 POSILLIPO 義式晚餐', time: '', note: '浪漫海景收尾，提前3~5天預約' },
+      { spotId: null, name: '🏁 還車 / 回飯店', time: '19:30', note: '完美收尾' }
+    ]},
+    { title: 'Day 4｜那霸市區→機場', items: [
+      { spotId: 4, name: '☕ コーヒースタンド小嶺', time: '07:30', note: '牧志市場旁，手沖咖啡' },
+      { spotId: 3, name: '🫘 じーまーみ豆腐専門店 花商', time: '08:00', note: '花生豆腐，沖繩特色早點' },
+      { spotId: 1, name: '🏪 那霸市第一牧志公設市場', time: '08:30', note: '最後一次採購伴手禮' },
+      { spotId: 5, name: '🍩 サーターアンダギー歩', time: '09:30', note: '買一袋帶上飛機！' },
+      { spotId: 8, name: '🍔 Jef ジェフ サンライズ那覇店', time: '10:00', note: '苦瓜漢堡！沖繩限定' },
+      { spotId: 14, name: '🛍️ 那覇 国際通り 最後採購', time: '10:45', note: '補買沒買到的伴手禮' },
+      { spotId: null, name: '🚝 Yui Rail 前往機場', time: '11:30', note: '約12分鐘到那霸機場' },
+      { spotId: null, name: '✈️ 那霸機場 Check-in', time: '12:00', note: '建議起飛前2小時抵達' }
+    ]}
+  ];
+  var itinerary = [];
+  dayDefs.forEach(function(def) {
+    var day = { id: Date.now() + Math.random(), title: def.title, items: [] };
+    def.items.forEach(function(it) {
+      var item = { id: Date.now() + Math.random(), spotId: it.spotId, name: it.name, time: it.time || '', note: it.note || '' };
+      if (it.spotId) {
+        var s = defSpots.find(function(sp) { return sp.id === it.spotId; });
+        if (s && !item.name) item.name = s.emoji + ' ' + s.name;
+        if (s) { item.lat = s.lat; item.lng = s.lng; }
+      }
+      day.items.push(item);
+    });
+    itinerary.push(day);
+  });
+  return { version: 2, header: { flag: '🇯🇵', title: '沖繩自由行攻略地圖', subtitle: '老辣妹精選 39 個景點・美食・購物・體驗' }, areas: defAreas, spots: defSpots, itinerary: itinerary };
+}
+
+function initTrips() {
+  if (tripCollection.length === 0) {
+    var oldData = JSON.parse(localStorage.getItem('oki_custom') || '[]');
+    var defaultTrip = {
+      id: String(Date.now()),
+      name: '沖繩自由行（推薦行程）',
+      icon: '🏖️',
+      created: new Date().toISOString().slice(0, 10)
+    };
+    tripCollection.push(defaultTrip);
+    activeTripId = defaultTrip.id;
+    saveTripMeta();
+    if (oldData.length > 0) {
+      // Migrate old oki_custom data into new format
+      var migratedData = { version: 2, areas: JSON.parse(JSON.stringify(DEFAULT_AREAS)), spots: JSON.parse(JSON.stringify(DEFAULT_SPOTS)), itinerary: oldData };
+      saveTripData(activeTripId, migratedData);
+    } else {
+      saveTripData(activeTripId, builtinItinerary);
+    }
+    localStorage.removeItem('oki_custom');
+  }
+  var hasBuiltin = tripCollection.some(function(t) { return t._builtin; });
+  if (!hasBuiltin) {
+    var firstTripData = loadTripData(tripCollection[0].id);
+    var existingEmpty = tripCollection.length === 1 && firstTripData.itinerary.length === 0;
+    if (existingEmpty) {
+      saveTripData(tripCollection[0].id, builtinItinerary);
+      tripCollection[0].name = '沖繩自由行（推薦行程）';
+      tripCollection[0]._builtin = true;
+      saveTripMeta();
+    } else {
+      var recTrip = {
+        id: String(Date.now() + 1),
+        name: '沖繩自由行（推薦行程）',
+        icon: '🏖️',
+        created: new Date().toISOString().slice(0, 10),
+        _builtin: true
+      };
+      tripCollection.unshift(recTrip);
+      saveTripData(recTrip.id, builtinItinerary);
+      saveTripMeta();
+    }
+  }
+  if (!activeTripId || !tripCollection.find(function(t) { return t.id === activeTripId; })) {
+    activeTripId = tripCollection[0].id;
+    localStorage.setItem('oki_active_trip', activeTripId);
+  }
+  var tripData = loadTripData(activeTripId);
+  activeSpots = tripData.spots;
+  activeAreas = tripData.areas;
+  activeHeader = tripData.header;
+  customItin = tripData.itinerary;
+  // Migrate old global header into current trip if present
+  var oldFlag = localStorage.getItem('oki_header_flag');
+  var oldTitle = localStorage.getItem('oki_header_title');
+  var oldSub = localStorage.getItem('oki_header_subtitle');
+  if (oldFlag || oldTitle || oldSub) {
+    if (oldFlag) activeHeader.flag = oldFlag;
+    if (oldTitle) activeHeader.title = oldTitle;
+    if (oldSub) activeHeader.subtitle = oldSub;
+    localStorage.removeItem('oki_header_flag');
+    localStorage.removeItem('oki_header_title');
+    localStorage.removeItem('oki_header_subtitle');
+    saveCustom();
+  }
+  applyHeader();
+  rebuildMarkers();
+  rebuildFilters();
+  rebuildLegend();
+  buildCards('all');
+  renderTrips();
+}
+
+function saveTripMeta() {
+  localStorage.setItem('oki_trips', JSON.stringify(tripCollection));
+  localStorage.setItem('oki_active_trip', activeTripId);
+}
+
+function saveTripData(tripId, data) {
+  try {
+    localStorage.setItem('oki_trip_' + tripId, JSON.stringify(data));
+  } catch (e) {
+    alert('儲存空間不足！請刪除一些照片或旅程後再試。');
+  }
+}
+
+function loadTripData(tripId) {
+  var raw = JSON.parse(localStorage.getItem('oki_trip_' + tripId) || 'null');
+  if (!raw) return { version: 2, header: { flag: '✈️', title: '我的旅程', subtitle: '' }, areas: { order: [], config: {} }, spots: [], itinerary: [] };
+  if (Array.isArray(raw)) {
+    var migrated = { version: 2, header: { flag: '✈️', title: '我的旅程', subtitle: '' }, areas: { order: [], config: {} }, spots: [], itinerary: raw };
+    saveTripData(tripId, migrated);
+    return migrated;
+  }
+  if (!raw.areas) raw.areas = { order: [], config: {} };
+  if (!raw.spots) raw.spots = [];
+  if (!raw.itinerary) raw.itinerary = [];
+  if (!raw.header) raw.header = { flag: '✈️', title: '我的旅程', subtitle: '' };
+  return raw;
+}
+
+function saveCustom() {
+  var tripData = { version: 2, header: activeHeader, areas: activeAreas, spots: activeSpots, itinerary: customItin };
+  saveTripData(activeTripId, tripData);
+}
+
+function applyHeader() {
+  document.getElementById('headerFlag').textContent = activeHeader.flag;
+  document.getElementById('headerTitle').textContent = activeHeader.title;
+  document.getElementById('headerSubtitle').textContent = activeHeader.subtitle;
+}
+
+function switchTrip(tripId) {
+  if (tripId === activeTripId) return;
+  saveCustom();
+  activeTripId = tripId;
+  var tripData = loadTripData(tripId);
+  activeSpots = tripData.spots;
+  activeAreas = tripData.areas;
+  activeHeader = tripData.header;
+  customItin = tripData.itinerary;
+  applyHeader();
+  saveTripMeta();
+  rebuildMarkers();
+  rebuildFilters();
+  rebuildLegend();
+  buildCards('all');
+  renderTrips();
+  renderCustom();
+  updateStatsBar();
+  updateHeaderBadge();
+  if (activeSpots.length > 0) {
+    var bounds = L.latLngBounds(activeSpots.map(function(s) { return [s.lat, s.lng]; }));
+    map.fitBounds(bounds, { padding: [60, 60] });
+  }
+}
+
+function addTrip() {
+  openNewTripModal();
+}
+
+function createTripWithData(name, tripData) {
+  var icons = ['✈️','🏖️','🗼','🏔️','🌍','🚢','🎒','🗺️'];
+  var icon = icons[tripCollection.length % icons.length];
+  var trip = {
+    id: String(Date.now()),
+    name: name.trim(),
+    icon: icon,
+    created: new Date().toISOString().slice(0, 10)
+  };
+  saveCustom();
+  tripCollection.push(trip);
+  activeTripId = trip.id;
+  activeSpots = tripData.spots;
+  activeAreas = tripData.areas;
+  activeHeader = tripData.header || { flag: '✈️', title: name.trim(), subtitle: '' };
+  customItin = tripData.itinerary;
+  applyHeader();
+  saveTripMeta();
+  saveCustom();
+  rebuildMarkers();
+  rebuildFilters();
+  rebuildLegend();
+  buildCards('all');
+  renderTrips();
+  renderCustom();
+  updateHeaderBadge();
+  switchTab('custom');
+}
+
+function renameTrip(tripId) {
+  var trip = tripCollection.find(function(t) { return t.id === tripId; });
+  if (!trip) return;
+  var name = prompt('修改旅程名稱：', trip.name);
+  if (!name || !name.trim()) return;
+  trip.name = name.trim();
+  saveTripMeta();
+  renderTrips();
+}
+
+function deleteTrip(tripId) {
+  if (tripCollection.length <= 1) {
+    alert('至少要保留一個旅程！');
+    return;
+  }
+  var trip = tripCollection.find(function(t) { return t.id === tripId; });
+  if (!trip) return;
+  if (!confirm('確定要刪除「' + trip.name + '」嗎？\n行程資料將無法復原。')) return;
+  localStorage.removeItem('oki_trip_' + tripId);
+  tripCollection = tripCollection.filter(function(t) { return t.id !== tripId; });
+  if (activeTripId === tripId) {
+    activeTripId = tripCollection[0].id;
+    var tripData = loadTripData(activeTripId);
+    activeSpots = tripData.spots;
+    activeAreas = tripData.areas;
+    activeHeader = tripData.header;
+    customItin = tripData.itinerary;
+    applyHeader();
+    rebuildMarkers();
+    rebuildFilters();
+    rebuildLegend();
+    buildCards('all');
+    renderCustom();
+    updateHeaderBadge();
+  }
+  saveTripMeta();
+  renderTrips();
+}
+
+function toggleTripPanel() {
+  document.getElementById('tripPanel').classList.toggle('collapsed');
+}
+
+function renderTrips() {
+  var list = document.getElementById('tripList');
+  var html = '';
+  tripCollection.forEach(function(trip) {
+    var isActive = trip.id === activeTripId;
+    var tripData;
+    if (isActive) {
+      tripData = { spots: activeSpots, itinerary: customItin };
+    } else {
+      tripData = loadTripData(trip.id);
+    }
+    var dayCount = tripData.itinerary.length;
+    var spotCount = tripData.spots ? tripData.spots.length : 0;
+    var meta = spotCount + ' 景點 · ' + dayCount + ' 天';
+
+    html += '<div class="trip-item' + (isActive ? ' active' : '') + '" onclick="switchTrip(\'' + trip.id + '\')">'
+      + '<div class="trip-item-icon">' + esc(trip.icon) + '</div>'
+      + '<div class="trip-item-info">'
+      + '<div class="trip-item-name">' + esc(trip.name) + '</div>'
+      + '<div class="trip-item-meta">' + meta + '</div>'
+      + '</div>'
+      + '<div class="trip-item-actions">'
+      + '<button title="重新命名" onclick="event.stopPropagation();renameTrip(\'' + trip.id + '\')">✏️</button>'
+      + '<button class="del" title="刪除" onclick="event.stopPropagation();deleteTrip(\'' + trip.id + '\')">🗑</button>'
+      + '</div>'
+      + '</div>';
+  });
+  html += '<button class="trip-add-btn" onclick="addTrip()">＋ 新增旅程</button>';
+  list.innerHTML = html;
+}
+
+initTrips();
+renderCustom();
+updateHeaderBadge();
+
+// ── Editable Header (per-trip) ──
+var hdrFlag = document.getElementById('headerFlag');
+var hdrTitle = document.getElementById('headerTitle');
+var hdrSub = document.getElementById('headerSubtitle');
+hdrFlag.addEventListener('blur', function(){ activeHeader.flag = this.textContent; saveCustom(); });
 hdrFlag.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+hdrTitle.addEventListener('blur', function(){ activeHeader.title = this.textContent; saveCustom(); });
+hdrTitle.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+hdrSub.addEventListener('blur', function(){ activeHeader.subtitle = this.textContent; saveCustom(); });
+hdrSub.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
 
 // ── Onboarding Guide ──
 const obSteps = [
-  { icon: '👋', title: '歡迎使用沖繩攻略地圖', desc: '這是一份可自訂的互動式旅遊地圖，包含 39 個精選景點與完整行程規劃。\n\n以下快速介紹主要功能，讓你馬上上手！' },
-  { icon: '✏️', title: '標題可以自由修改', desc: '點擊上方的旗幟圖示、標題或副標題，都可以直接編輯成你喜歡的內容。修改後會自動儲存。' },
+  { icon: '👋', title: '歡迎使用旅遊攻略地圖', desc: '這是一份可自訂的互動式旅遊地圖，支援任何目的地！\n\n每個旅程都有獨立的標題、景點清單和區域分類，可以完全自訂。' },
+  { icon: '✏️', title: '標題隨旅程獨立', desc: '點擊上方的國旗、標題或副標題可直接編輯。每個旅程都有自己的標題，切換旅程時會自動切換。' },
   { icon: '＋', title: '一鍵加入景點到行程', desc: '每張景點卡片右上角都有 ＋ 按鈕，點擊即可快速將景點加入你的自訂行程。' },
   { icon: '🗓️', title: '打造你的專屬行程', desc: '切換到「✏️ 自訂行程」分頁，可以新增天數、排序景點、填寫時間與備註，規劃完美旅程。' },
-  { icon: '📌', title: '地圖選點放置地標', desc: '在自訂行程中點擊「📌 地圖選點」，接著在地圖上任意位置點擊即可放置地標，輸入名稱後加入行程。按 Esc 可隨時取消。' },
+  { icon: '📍', title: '自訂景點和區域', desc: '在景點清單上方點「＋ 新增景點」可新增自訂景點。篩選列的「＋」按鈕可新增區域分類。\n\n每個旅程的景點和區域都是獨立的！' },
+  { icon: '📌', title: '地圖選點放置地標', desc: '在自訂行程中點擊「📌 地圖選點」，接著在地圖上任意位置點擊即可放置地標。新增景點時也能用地圖選點設定座標。' },
   { icon: '🌍', title: '搜尋全球任意地點', desc: '點擊「📍 新增景點」開啟選單，在搜尋框輸入任何地名後按 Enter，即可搜尋全球地點加入行程。\n\n不只沖繩，任何國家都能用！' },
-  { icon: '💾', title: '自動儲存，隨時繼續', desc: '所有自訂內容（標題、行程、地標）都會自動儲存在瀏覽器中，關掉重開也不會消失。\n\n按標題列的 ↺ 可一鍵重置，？ 可重看本教學。' },
+  { icon: '📁', title: '多旅程管理', desc: '地圖右上角「📁 我的旅程」可建立多個旅程。每個旅程擁有獨立的標題、景點、區域和行程。\n\n可選擇空白旅程或複製目前旅程。' },
+  { icon: '💾', title: '自動儲存，隨時繼續', desc: '所有自訂內容（標題、行程、景點、照片）都會自動儲存在瀏覽器中，關掉重開也不會消失。\n\n按標題列的 ↺ 可一鍵重置，？ 可重看本教學。' },
 ];
 let obStep = 0;
 
@@ -3149,52 +3451,461 @@ if (!localStorage.getItem('oki_onboarding_done')) {
 }
 
 // ── Print / Export PDF ──
-function openPrintModal() {
-  document.getElementById('printModalOverlay').style.display = 'flex';
-}
-function closePrintModal() {
-  document.getElementById('printModalOverlay').style.display = 'none';
-}
-
-function doPrint(mode) {
-  closePrintModal();
-
-  if (mode === 'custom') {
-    if (customItin.length === 0) {
-      alert('還沒有自訂行程！請先到「✏️ 自訂行程」新增內容。');
-      return;
-    }
-    document.getElementById('panelItin').style.display = 'none';
-    document.getElementById('panelCustom').style.display = 'flex';
-
-    const style = document.createElement('style');
-    style.id = 'printCustomOverride';
-    style.textContent = '@media print { #panelItin { display:none!important; } #panelCustom { display:flex!important; overflow:visible; } .custom-toolbar { display:none; } .custom-day-del { display:none; } .custom-day-footer { display:none; } .custom-item-actions { display:none; } .custom-item-photo-btn { display:none!important; } .custom-item-time { border:none; background:transparent; } .custom-item-note { border:none; background:transparent; } .custom-item-name-input { border:none; background:transparent; } .custom-day-title { border:none; background:transparent; color:#fff; } .custom-items { overflow:visible; } .custom-day { break-inside:avoid; } .custom-photo-thumb .photo-del { display:none!important; } .custom-photo-thumb { width:50px; height:50px; } }';
-    document.head.appendChild(style);
-
-    window.print();
-
-    const override = document.getElementById('printCustomOverride');
-    if (override) override.remove();
-  } else {
-    window.print();
+function doPrint() {
+  if (customItin.length === 0) {
+    alert('還沒有自訂行程！請先到「✏️ 自訂行程」新增內容。');
+    return;
   }
+  document.getElementById('panelCustom').style.display = 'flex';
+
+  const style = document.createElement('style');
+  style.id = 'printCustomOverride';
+  style.textContent = '@media print { #panelCustom { display:flex!important; overflow:visible; } .custom-toolbar { display:none; } .custom-day-del { display:none; } .custom-day-footer { display:none; } .custom-item-actions { display:none; } .custom-item-photo-btn { display:none!important; } .custom-item-time { border:none; background:transparent; } .custom-item-note { border:none; background:transparent; } .custom-item-name-input { border:none; background:transparent; } .custom-day-title { border:none; background:transparent; color:#fff; } .custom-items { overflow:visible; } .custom-day { break-inside:avoid; } .custom-photo-thumb .photo-del { display:none!important; } .custom-photo-thumb { width:50px; height:50px; } }';
+  document.head.appendChild(style);
+
+  window.print();
+
+  const override = document.getElementById('printCustomOverride');
+  if (override) override.remove();
 }
 
 // ── Reset All ──
 function resetAll() {
-  if (!confirm('確定要重置所有自訂內容嗎？\n\n這會還原標題、清除自訂行程，且無法復原。')) return;
-  localStorage.removeItem('oki_header_flag');
-  localStorage.removeItem('oki_header_title');
-  localStorage.removeItem('oki_header_subtitle');
-  localStorage.removeItem('oki_custom');
+  if (!confirm('確定要重置所有自訂內容嗎？\n\n這會還原標題、將目前旅程重置為範本資料，且無法復原。')) return;
   localStorage.removeItem('oki_onboarding_done');
-  hdrFlag.textContent = '🇯🇵';
-  hdrTitle.textContent = '沖繩自由行攻略地圖';
-  hdrSub.textContent = '老辣妹精選 39 個景點・美食・購物・體驗';
-  customItin = [];
+  var templateData = buildDefaultTripData();
+  activeHeader = templateData.header;
+  applyHeader();
+  activeSpots = templateData.spots;
+  activeAreas = templateData.areas;
+  customItin = templateData.itinerary;
+  saveCustom();
+  rebuildMarkers();
+  rebuildFilters();
+  rebuildLegend();
+  buildCards('all');
   renderCustom();
+  renderTrips();
+  updateStatsBar();
 }
+
+// ── New Trip Modal ──
+var newTripOptionType = 'empty';
+
+function openNewTripModal() {
+  newTripOptionType = 'empty';
+  document.getElementById('newTripName').value = '';
+  document.getElementById('newTripFlag').value = '';
+  document.getElementById('newTripSubtitle').value = '';
+  document.getElementById('newTripModal').style.display = 'flex';
+  highlightTripOption();
+  setTimeout(function() { document.getElementById('newTripName').focus(); }, 100);
+}
+
+function closeNewTripModal() {
+  document.getElementById('newTripModal').style.display = 'none';
+}
+
+function selectNewTripOption(type) {
+  newTripOptionType = type;
+  highlightTripOption();
+}
+
+function highlightTripOption() {
+  var opts = document.querySelectorAll('.new-trip-option');
+  var types = ['empty', 'copy'];
+  opts.forEach(function(opt, i) {
+    var isSelected = types[i] === newTripOptionType;
+    opt.classList.toggle('selected', isSelected);
+    opt.style.borderColor = isSelected ? '#1a6b8a' : '#e2e8f0';
+    opt.style.background = isSelected ? '#f0f9ff' : '';
+  });
+}
+
+function confirmNewTrip() {
+  var name = document.getElementById('newTripName').value.trim();
+  var customFlag = document.getElementById('newTripFlag').value.trim();
+  var customSubtitle = document.getElementById('newTripSubtitle').value.trim();
+  if (!name) {
+    if (newTripOptionType === 'copy') name = '複製 - ' + (tripCollection.find(function(t) { return t.id === activeTripId; }) || {}).name;
+    else name = '新旅程';
+  }
+
+  var tripData;
+  if (newTripOptionType === 'copy') {
+    var copiedHeader = JSON.parse(JSON.stringify(activeHeader));
+    if (customFlag) copiedHeader.flag = customFlag;
+    if (customSubtitle) copiedHeader.subtitle = customSubtitle;
+    tripData = { version: 2, header: copiedHeader, areas: JSON.parse(JSON.stringify(activeAreas)), spots: JSON.parse(JSON.stringify(activeSpots)), itinerary: JSON.parse(JSON.stringify(customItin)) };
+  } else {
+    tripData = { version: 2, header: { flag: customFlag || '✈️', title: name, subtitle: customSubtitle || '' }, areas: { order: [], config: {} }, spots: [], itinerary: [] };
+  }
+
+  closeNewTripModal();
+  createTripWithData(name, tripData);
+}
+
+// ── Area Modal ──
+var areaColorPaletteColors = ['#e53e3e','#dd6b20','#d69e2e','#38a169','#3182ce','#805ad5','#0987a0','#702459','#d53f8c','#319795','#2b6cb0','#975a16'];
+var selectedAreaColor = '#e53e3e';
+
+function openAddAreaModal(editKey) {
+  var modal = document.getElementById('areaModal');
+  var titleEl = document.getElementById('areaModalTitle');
+  var nameInput = document.getElementById('areaNameInput');
+  var editKeyInput = document.getElementById('areaEditKey');
+  var deleteBtn = document.getElementById('areaDeleteBtn');
+
+  if (editKey && activeAreas.config[editKey]) {
+    titleEl.textContent = '編輯區域';
+    nameInput.value = activeAreas.config[editKey].label.replace(/^[^\s]+\s/, '');
+    selectedAreaColor = activeAreas.config[editKey].color;
+    editKeyInput.value = editKey;
+    deleteBtn.style.display = '';
+  } else {
+    titleEl.textContent = '新增區域';
+    nameInput.value = '';
+    selectedAreaColor = areaColorPaletteColors[activeAreas.order.length % areaColorPaletteColors.length];
+    editKeyInput.value = '';
+    deleteBtn.style.display = 'none';
+  }
+
+  renderAreaColorPalette();
+  modal.style.display = 'flex';
+  setTimeout(function() { nameInput.focus(); }, 100);
+}
+
+function closeAreaModal() {
+  document.getElementById('areaModal').style.display = 'none';
+}
+
+function renderAreaColorPalette() {
+  var container = document.getElementById('areaColorPalette');
+  container.innerHTML = '';
+  areaColorPaletteColors.forEach(function(c) {
+    var swatch = document.createElement('div');
+    swatch.style.cssText = 'width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid ' + (c === selectedAreaColor ? '#1a202c' : 'transparent') + ';background:' + c + ';transition:border-color 0.15s;';
+    swatch.addEventListener('click', function() {
+      selectedAreaColor = c;
+      renderAreaColorPalette();
+    });
+    container.appendChild(swatch);
+  });
+}
+
+function saveArea() {
+  var nameInput = document.getElementById('areaNameInput');
+  var name = nameInput.value.trim();
+  if (!name) { alert('請輸入區域名稱'); return; }
+
+  var editKey = document.getElementById('areaEditKey').value;
+  var key;
+  if (editKey) {
+    key = editKey;
+    activeAreas.config[key] = { label: name, color: selectedAreaColor };
+    // Update spots in this area with new color
+    activeSpots.forEach(function(s) {
+      if (s.area === key) {
+        s.color = selectedAreaColor;
+        s.areaName = name;
+      }
+    });
+  } else {
+    key = 'area_' + Date.now();
+    activeAreas.order.push(key);
+    activeAreas.config[key] = { label: name, color: selectedAreaColor };
+  }
+
+  saveCustom();
+  rebuildFilters();
+  rebuildLegend();
+  rebuildMarkers();
+  buildCards('all');
+  updateStatsBar();
+  closeAreaModal();
+}
+
+function deleteAreaFromModal() {
+  var editKey = document.getElementById('areaEditKey').value;
+  if (!editKey) return;
+  deleteArea(editKey);
+  closeAreaModal();
+}
+
+function deleteArea(areaKey) {
+  var cfg = activeAreas.config[areaKey];
+  if (!cfg) return;
+  if (!confirm('確定要刪除區域「' + cfg.label + '」嗎？\n該區域的景點將移至第一個區域。')) return;
+
+  var firstKey = activeAreas.order.find(function(k) { return k !== areaKey; });
+  activeAreas.order = activeAreas.order.filter(function(k) { return k !== areaKey; });
+  delete activeAreas.config[areaKey];
+
+  // Reassign orphaned spots
+  activeSpots.forEach(function(s) {
+    if (s.area === areaKey) {
+      if (firstKey && activeAreas.config[firstKey]) {
+        s.area = firstKey;
+        s.color = activeAreas.config[firstKey].color;
+        s.areaName = activeAreas.config[firstKey].label;
+      } else {
+        s.area = 'uncategorized';
+        s.color = '#a0aec0';
+        s.areaName = '未分類';
+      }
+    }
+  });
+
+  saveCustom();
+  rebuildFilters();
+  rebuildLegend();
+  rebuildMarkers();
+  buildCards('all');
+  updateStatsBar();
+}
+
+// ── Spot Modal ──
+var spotPinMode = false;
+
+function getNextSpotId() {
+  return Math.max.apply(null, activeSpots.map(function(s) { return s.id; }).concat([0])) + 1;
+}
+
+function openAddSpotModal(editSpotId) {
+  var modal = document.getElementById('spotModal');
+  var titleEl = document.getElementById('spotModalTitle');
+  var editIdInput = document.getElementById('spotEditId');
+
+  // Populate area select
+  var areaSelect = document.getElementById('spotAreaSelect');
+  areaSelect.innerHTML = '';
+  activeAreas.order.forEach(function(key) {
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = activeAreas.config[key].label;
+    areaSelect.appendChild(opt);
+  });
+  if (activeAreas.order.length === 0) {
+    var opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '（請先新增區域）';
+    areaSelect.appendChild(opt);
+  }
+
+  if (editSpotId) {
+    var s = activeSpots.find(function(sp) { return sp.id === editSpotId; });
+    if (!s) return;
+    titleEl.textContent = '編輯景點';
+    editIdInput.value = String(editSpotId);
+    document.getElementById('spotNameInput').value = s.name;
+    document.getElementById('spotEmojiInput').value = s.emoji || '📍';
+    areaSelect.value = s.area;
+    document.getElementById('spotLatInput').value = s.lat;
+    document.getElementById('spotLngInput').value = s.lng;
+    document.getElementById('spotTypeInput').value = s.type || '';
+    document.getElementById('spotTagsInput').value = (s.tags || []).join(', ');
+    document.getElementById('spotDescInput').value = s.desc || '';
+    document.getElementById('spotTimeInput').value = s.time || '';
+    document.getElementById('spotBudgetInput').value = s.budget || '';
+    document.getElementById('spotHoursInput').value = s.hours || '';
+    document.getElementById('spotResvInput').value = s.resv || '不需預約';
+    document.getElementById('spotResvNoteInput').value = s.resvNote || '';
+    document.getElementById('spotMapUrlInput').value = s.mapUrl || '';
+    document.getElementById('spotIgInput').value = s.ig || '';
+    document.getElementById('spotTransInput').value = s.trans || '';
+  } else {
+    titleEl.textContent = '新增景點';
+    editIdInput.value = '';
+    document.getElementById('spotNameInput').value = '';
+    document.getElementById('spotEmojiInput').value = '📍';
+    document.getElementById('spotLatInput').value = '';
+    document.getElementById('spotLngInput').value = '';
+    document.getElementById('spotTypeInput').value = '';
+    document.getElementById('spotTagsInput').value = '';
+    document.getElementById('spotDescInput').value = '';
+    document.getElementById('spotTimeInput').value = '';
+    document.getElementById('spotBudgetInput').value = '';
+    document.getElementById('spotHoursInput').value = '';
+    document.getElementById('spotResvInput').value = '不需預約';
+    document.getElementById('spotResvNoteInput').value = '';
+    document.getElementById('spotMapUrlInput').value = '';
+    document.getElementById('spotIgInput').value = '';
+    document.getElementById('spotTransInput').value = '';
+  }
+
+  // Collapse optional fields
+  document.getElementById('spotOptionalFields').style.display = 'none';
+  modal.style.display = 'flex';
+  setTimeout(function() { document.getElementById('spotNameInput').focus(); }, 100);
+}
+
+function closeSpotModal() {
+  document.getElementById('spotModal').style.display = 'none';
+  if (spotPinMode) exitSpotPinMode();
+}
+
+function toggleSpotOptional() {
+  var el = document.getElementById('spotOptionalFields');
+  var btn = el.previousElementSibling;
+  if (el.style.display === 'none') {
+    el.style.display = '';
+    btn.textContent = '▼ 更多選填欄位';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '▶ 更多選填欄位';
+  }
+}
+
+function saveSpot() {
+  var name = document.getElementById('spotNameInput').value.trim();
+  var lat = parseFloat(document.getElementById('spotLatInput').value);
+  var lng = parseFloat(document.getElementById('spotLngInput').value);
+
+  if (!name) { alert('請輸入景點名稱'); return; }
+  if (isNaN(lat) || isNaN(lng)) { alert('請輸入座標，或使用地圖選點'); return; }
+
+  var areaKey = document.getElementById('spotAreaSelect').value;
+  if (!areaKey && activeAreas.order.length > 0) areaKey = activeAreas.order[0];
+
+  var areaCfg = activeAreas.config[areaKey] || { label: '未分類', color: '#a0aec0' };
+  var emoji = document.getElementById('spotEmojiInput').value.trim() || '📍';
+  var tagsStr = document.getElementById('spotTagsInput').value.trim();
+  var tags = tagsStr ? tagsStr.split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+  var spotData = {
+    area: areaKey,
+    color: areaCfg.color,
+    areaName: areaCfg.label,
+    name: name,
+    type: document.getElementById('spotTypeInput').value.trim() || '',
+    emoji: emoji,
+    desc: document.getElementById('spotDescInput').value.trim() || '',
+    tags: tags,
+    mapUrl: document.getElementById('spotMapUrlInput').value.trim() || '',
+    ig: document.getElementById('spotIgInput').value.trim().replace(/^@/, '') || '',
+    time: document.getElementById('spotTimeInput').value.trim() || '',
+    budget: document.getElementById('spotBudgetInput').value.trim() || '',
+    hours: document.getElementById('spotHoursInput').value.trim() || '',
+    resv: document.getElementById('spotResvInput').value || '不需預約',
+    resvNote: document.getElementById('spotResvNoteInput').value.trim() || '',
+    trans: document.getElementById('spotTransInput').value.trim() || '',
+    lat: lat,
+    lng: lng
+  };
+
+  var editId = document.getElementById('spotEditId').value;
+  if (editId) {
+    var existingIdx = activeSpots.findIndex(function(sp) { return sp.id === parseInt(editId); });
+    if (existingIdx >= 0) {
+      spotData.id = parseInt(editId);
+      activeSpots[existingIdx] = spotData;
+    }
+  } else {
+    spotData.id = getNextSpotId();
+    activeSpots.push(spotData);
+  }
+
+  saveCustom();
+  rebuildMarkers();
+  buildCards('all');
+  updateStatsBar();
+  closeSpotModal();
+}
+
+function deleteSpot(spotId) {
+  var s = activeSpots.find(function(sp) { return sp.id === spotId; });
+  if (!s) return;
+  if (!confirm('確定要刪除景點「' + s.name + '」嗎？')) return;
+
+  activeSpots = activeSpots.filter(function(sp) { return sp.id !== spotId; });
+
+  // Convert itinerary items referencing this spot to free items
+  customItin.forEach(function(day) {
+    day.items.forEach(function(item) {
+      if (item.spotId === spotId) {
+        item.spotId = null;
+        // Keep name but mark as free item
+      }
+    });
+  });
+
+  saveCustom();
+  rebuildMarkers();
+  buildCards('all');
+  renderCustom();
+  updateStatsBar();
+}
+
+// ── Spot Pin Mode (for spot modal coordinate picker) ──
+var spotPinTempMarker = null;
+
+function enterSpotPinMode() {
+  spotPinMode = true;
+  document.getElementById('spotModal').style.display = 'none';
+  document.querySelector('.map-wrapper').classList.add('map-pin-mode');
+  document.getElementById('pinDropBanner').style.display = '';
+  document.getElementById('pinDropBanner').textContent = '📌 在地圖上點擊選擇景點位置（按 Esc 取消）';
+}
+
+function exitSpotPinMode() {
+  spotPinMode = false;
+  document.querySelector('.map-wrapper').classList.remove('map-pin-mode');
+  document.getElementById('pinDropBanner').style.display = 'none';
+  document.getElementById('pinDropBanner').textContent = '📌 在地圖上點擊要放置地標的位置（按 Esc 取消）';
+  if (spotPinTempMarker) { map.removeLayer(spotPinTempMarker); spotPinTempMarker = null; }
+}
+
+// Modify the existing map click handler to also handle spot pin mode
+var origMapClick = map._events.click;
+map.off('click');
+map.on('click', function(e) {
+  if (spotPinMode) {
+    var lat = Math.round(e.latlng.lat * 100000) / 100000;
+    var lng = Math.round(e.latlng.lng * 100000) / 100000;
+    document.getElementById('spotLatInput').value = lat;
+    document.getElementById('spotLngInput').value = lng;
+    exitSpotPinMode();
+    document.getElementById('spotModal').style.display = 'flex';
+    return;
+  }
+  if (pinDropMode) {
+    if (pinDropTempMarker) map.removeLayer(pinDropTempMarker);
+
+    var lat2 = Math.round(e.latlng.lat * 100000) / 100000;
+    var lng2 = Math.round(e.latlng.lng * 100000) / 100000;
+
+    pinDropTempMarker = L.marker([lat2, lng2]).addTo(map);
+    var html = '<div style="padding:10px;min-width:210px;">'
+      + '<div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">📌 新增地標</div>'
+      + '<input id="pinDropName" type="text" value="新地標" style="width:100%;padding:7px 10px;border:1px solid #cbd5e0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;outline:none;" />'
+      + '<div style="display:flex;gap:6px;margin-top:10px;">'
+      + '<button onclick="confirmPinDrop(' + lat2 + ',' + lng2 + ')" style="flex:1;padding:8px;background:#1a6b8a;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">確認加入</button>'
+      + '<button onclick="exitPinDropMode()" style="flex:1;padding:8px;background:#edf2f7;color:#4a5568;border:none;border-radius:8px;font-size:0.8rem;cursor:pointer;font-family:inherit;">取消</button>'
+      + '</div></div>';
+    pinDropTempMarker.bindPopup(html, { closeButton: false, closeOnClick: false, maxWidth: 260 }).openPopup();
+    setTimeout(function() { var inp = document.getElementById('pinDropName'); if (inp) inp.select(); }, 100);
+  }
+});
+
+// Handle Escape for spot pin mode
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && spotPinMode) {
+    exitSpotPinMode();
+    document.getElementById('spotModal').style.display = 'flex';
+  }
+});
+
+// ── Update header badge dynamically ──
+function updateHeaderBadge() {
+  var badge = document.querySelector('.badge');
+  if (badge) badge.textContent = '📍 ' + activeSpots.length + ' 個地點';
+}
+// Call it when spots change
+var origSaveCustom = saveCustom;
+saveCustom = function() {
+  origSaveCustom();
+  updateHeaderBadge();
+};
 </script>
 
 </body>
